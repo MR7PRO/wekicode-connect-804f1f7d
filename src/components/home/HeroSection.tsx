@@ -18,23 +18,23 @@ export function HeroSection() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-primary/30 mb-8 animate-fade-in">
-            <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-sm font-medium">منصة مجتمعية للمبرمجين من غزة</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/20 border border-success/30 mb-8 animate-fade-in">
             <span className="text-lg">🇵🇸</span>
+            <span className="text-sm font-medium text-success">صنع في فلسطين - من غزة للعالم</span>
           </div>
 
           {/* Main Heading */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight mb-6 animate-slide-up">
-            <span className="text-foreground">حاضنة أعمال</span>
+            <span className="text-foreground">منصة </span>
+            <span className="text-gradient-primary">wekicode</span>
             <br />
-            <span className="text-gradient-primary">للمبرمجين والمبدعين</span>
+            <span className="text-foreground">لمستقبل المبرمجين</span>
           </h1>
 
           {/* Subheading */}
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            اكتسب النقاط، تعلم، اعمل، وانمو معنا. منصة متكاملة تجمع بين فرص العمل الحر، 
-            المواد التعليمية، والمجتمع الداعم في مكان واحد.
+            منصة وحاضنة أعمال فلسطينية في قطاع غزة توفر للطلبة والفريلانسرز مساحة عمل متكاملة 
+            مع كهرباء وإنترنت سريع، فرص عمل، مشاركة المعرفة ونظام نقاط تفاعلي.
           </p>
 
           {/* CTA Buttons */}
@@ -53,20 +53,25 @@ export function HeroSection() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.3s" }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: "0.3s" }}>
             <div className="glass rounded-xl p-4 md:p-6 hover-lift">
               <Users className="w-8 h-8 text-primary mx-auto mb-2" />
-              <div className="text-2xl md:text-3xl font-bold text-foreground">500+</div>
+              <div className="text-2xl md:text-3xl font-bold text-foreground">15K+</div>
               <div className="text-sm text-muted-foreground">مبرمج نشط</div>
             </div>
             <div className="glass rounded-xl p-4 md:p-6 hover-lift">
               <Zap className="w-8 h-8 text-accent mx-auto mb-2" />
-              <div className="text-2xl md:text-3xl font-bold text-foreground">1,200+</div>
-              <div className="text-sm text-muted-foreground">مشروع مكتمل</div>
+              <div className="text-2xl md:text-3xl font-bold text-foreground">2.5K+</div>
+              <div className="text-sm text-muted-foreground">فرصة عمل</div>
             </div>
             <div className="glass rounded-xl p-4 md:p-6 hover-lift">
               <Award className="w-8 h-8 text-success mx-auto mb-2" />
-              <div className="text-2xl md:text-3xl font-bold text-foreground">50K+</div>
+              <div className="text-2xl md:text-3xl font-bold text-foreground">500+</div>
+              <div className="text-sm text-muted-foreground">مادة تعليمية</div>
+            </div>
+            <div className="glass rounded-xl p-4 md:p-6 hover-lift">
+              <Sparkles className="w-8 h-8 text-warning mx-auto mb-2" />
+              <div className="text-2xl md:text-3xl font-bold text-foreground">50M+</div>
               <div className="text-sm text-muted-foreground">نقطة موزعة</div>
             </div>
           </div>

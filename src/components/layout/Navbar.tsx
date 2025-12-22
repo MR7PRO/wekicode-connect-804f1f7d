@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   Code2, 
@@ -9,9 +9,20 @@ import {
   User, 
   Menu,
   X,
-  Coins
+  Coins,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navLinks = [
   { path: "/", label: "الرئيسية", icon: Code2 },
@@ -19,12 +30,23 @@ const navLinks = [
   { path: "/jobs", label: "الوظائف", icon: Briefcase },
   { path: "/courses", label: "التعليم", icon: BookOpen },
   { path: "/rewards", label: "المكافآت", icon: Gift },
-  { path: "/profile", label: "ملفي", icon: User },
 ];
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, profile, loading, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return "U";
+    return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
@@ -60,13 +82,63 @@ export function Navbar() {
 
           {/* Points Display & Auth */}
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-accent text-accent-foreground font-bold">
-              <Coins className="w-5 h-5" />
-              <span>1,250</span>
-            </div>
-            <Button variant="hero" size="sm">
-              تسجيل الدخول
-            </Button>
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            ) : user ? (
+              <>
+                {/* Points badge */}
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-accent text-accent-foreground font-bold">
+                  <Coins className="w-5 h-5" />
+                  <span>{profile?.points ?? 0}</span>
+                </div>
+
+                {/* User dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={profile?.avatar_url ?? undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {getInitials(profile?.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="flex items-center gap-2 p-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile?.avatar_url ?? undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {getInitials(profile?.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{profile?.full_name ?? "مستخدم"}</span>
+                        <span className="text-xs text-muted-foreground">المستوى {profile?.level ?? 1}</span>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="cursor-pointer">
+                        <User className="w-4 h-4 ml-2" />
+                        ملفي الشخصي
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
+                      <LogOut className="w-4 h-4 ml-2" />
+                      تسجيل الخروج
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button variant="hero" size="sm">
+                  تسجيل الدخول
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -102,13 +174,32 @@ export function Navbar() {
                 );
               })}
               <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-accent text-accent-foreground font-bold">
-                  <Coins className="w-5 h-5" />
-                  <span>1,250</span>
-                </div>
-                <Button variant="hero" size="sm">
-                  تسجيل الدخول
-                </Button>
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-accent text-accent-foreground font-bold">
+                      <Coins className="w-5 h-5" />
+                      <span>{profile?.points ?? 0}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link to="/profile" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" size="sm">
+                          <User className="w-4 h-4" />
+                          ملفي
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                        <LogOut className="w-4 h-4" />
+                        خروج
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <Link to="/auth" className="w-full" onClick={() => setIsOpen(false)}>
+                    <Button variant="hero" className="w-full">
+                      تسجيل الدخول
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
