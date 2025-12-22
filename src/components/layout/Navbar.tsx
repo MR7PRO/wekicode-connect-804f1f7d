@@ -9,7 +9,6 @@ import {
   User, 
   Menu,
   X,
-  Coins,
   LogOut,
   Loader2,
   CreditCard
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProgressWidget } from "./ProgressWidget";
+import { NotificationBell } from "@/components/notifications/NotificationSystem";
 
 const navLinks = [
   { path: "/", label: "الرئيسية", icon: Code2 },
@@ -89,6 +89,9 @@ export function Navbar() {
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             ) : user ? (
               <>
+                {/* Notifications */}
+                <NotificationBell />
+                
                 {/* Progress Widget - Game-like level indicator */}
                 <ProgressWidget />
 
