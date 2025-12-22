@@ -33,7 +33,7 @@ const courses = [
     reviews: 89,
     type: "فيديو",
     points: 50,
-    thumbnail: "🎬",
+    thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=200&fit=crop",
     tags: ["React", "JavaScript", "Frontend"],
     description: "تعلم React.js من الصفر وصولاً لبناء تطبيقات متقدمة مع أفضل الممارسات...",
     free: false
@@ -52,7 +52,7 @@ const courses = [
     reviews: 156,
     type: "فيديو",
     points: 30,
-    thumbnail: "🐍",
+    thumbnail: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
     tags: ["Python", "Programming", "Beginner"],
     description: "ابدأ رحلتك في البرمجة مع Python بطريقة سهلة ومبسطة...",
     free: true
@@ -71,7 +71,7 @@ const courses = [
     reviews: 234,
     type: "مقال",
     points: 15,
-    thumbnail: "📚",
+    thumbnail: "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=400&h=200&fit=crop",
     tags: ["Git", "GitHub", "Version Control"],
     description: "تعلم أساسيات التحكم بالإصدارات والتعاون مع الفريق باستخدام Git...",
     free: true
@@ -90,7 +90,7 @@ const courses = [
     reviews: 98,
     type: "فيديو",
     points: 40,
-    thumbnail: "🎨",
+    thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=200&fit=crop",
     tags: ["Figma", "UI/UX", "Design"],
     description: "أتقن تصميم واجهات المستخدم الجذابة والتجربة المثالية للمستخدم...",
     free: false
@@ -109,7 +109,7 @@ const courses = [
     reviews: 67,
     type: "فيديو",
     points: 60,
-    thumbnail: "⚙️",
+    thumbnail: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
     tags: ["Node.js", "Express", "Backend"],
     description: "بناء APIs قوية ومتكاملة مع Node.js و Express...",
     free: false
@@ -128,7 +128,7 @@ const courses = [
     reviews: 78,
     type: "فيديو",
     points: 35,
-    thumbnail: "🐳",
+    thumbnail: "https://images.unsplash.com/photo-1605745341112-85968b19335b?w=400&h=200&fit=crop",
     tags: ["Docker", "DevOps", "Containers"],
     description: "تعلم كيفية استخدام Docker لتبسيط عملية التطوير والنشر...",
     free: false
@@ -230,8 +230,13 @@ export default function Courses() {
                 className="glass rounded-2xl overflow-hidden border-border/50 hover:border-primary/30 hover-lift transition-all cursor-pointer group"
               >
                 {/* Thumbnail */}
-                <div className="h-40 bg-gradient-to-br from-primary/20 via-card to-accent/10 flex items-center justify-center relative">
-                  <span className="text-6xl">{course.thumbnail}</span>
+                <div className="h-40 relative overflow-hidden">
+                  <img 
+                    src={course.thumbnail} 
+                    alt={course.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
                   {course.free && (
                     <span className="absolute top-3 right-3 px-2 py-1 rounded-md bg-success text-success-foreground text-xs font-bold">
                       مجاني

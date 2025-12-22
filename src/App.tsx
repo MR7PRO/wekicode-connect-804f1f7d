@@ -10,6 +10,7 @@ import Jobs from "./pages/Jobs";
 import Courses from "./pages/Courses";
 import Rewards from "./pages/Rewards";
 import Profile from "./pages/Profile";
+import Billing from "./pages/Billing";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/rewards" element={<Rewards />} />
+            <Route path="/billing" element={<Billing />} />
             <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
