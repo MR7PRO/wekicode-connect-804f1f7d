@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/components/notifications/NotificationSystem";
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
 import Jobs from "./pages/Jobs";
@@ -23,18 +24,20 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/questions" element={<Questions />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/rewards" element={<Rewards />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/profile" element={<Profile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <NotificationProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/questions" element={<Questions />} />
+              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/rewards" element={<Rewards />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/profile" element={<Profile />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

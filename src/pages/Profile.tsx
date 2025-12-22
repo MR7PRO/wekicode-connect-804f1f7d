@@ -21,8 +21,10 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { BadgeDisplay } from "@/components/badges/BadgeSystem";
 
-const tabs = ["نظرة عامة", "المشاريع", "الأسئلة", "الدورات", "الفواتير"];
+const tabs = ["نظرة عامة", "الشارات", "المشاريع", "الأسئلة", "الدورات", "الفواتير"];
 
 const projects = [
   {
@@ -92,17 +94,21 @@ const invoices = [
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("نظرة عامة");
+  const { profile, user } = useAuth();
 
-  const user = {
-    name: "أحمد محمد",
-    username: "@ahmed_dev",
-    bio: "مطور Full Stack | React & Node.js | شغوف بتطوير حلول تقنية مبتكرة",
+  // Use real data from profile or fallback to demo data
+  const userData = {
+    name: profile?.full_name ?? "مستخدم جديد",
+    username: user?.email ? `@${user.email.split("@")[0]}` : "@user",
+    bio: profile?.bio ?? "مطور Full Stack | React & Node.js | شغوف بتطوير حلول تقنية مبتكرة",
     location: "غزة، فلسطين 🇵🇸",
-    website: "ahmed.dev",
-    joinDate: "يناير 2023",
-    points: 1250,
-    level: 5,
-    rank: "مبرمج متميز",
+    website: "wekicode.dev",
+    joinDate: user?.created_at ? new Date(user.created_at).toLocaleDateString("ar-EG", { month: "long", year: "numeric" }) : "يناير 2023",
+    points: profile?.points ?? 0,
+    level: profile?.level ?? 1,
+    rank: getLevelRank(profile?.level ?? 1),
+    badges: profile?.badges ?? [],
+    skills: profile?.skills ?? ["React", "Node.js", "TypeScript"],
     stats: {
       projects: 12,
       answers: 45,
@@ -110,6 +116,19 @@ export default function Profile() {
       rating: 4.9
     }
   };
+
+  function getLevelRank(level: number): string {
+    if (level >= 10) return "أسطورة البرمجة";
+    if (level >= 7) return "مبرمج محترف";
+    if (level >= 5) return "مبرمج متميز";
+    if (level >= 3) return "مبرمج متقدم";
+    return "مبرمج مبتدئ";
+  }
+
+  const pointsToNextLevel = userData.level * 200;
+  const currentLevelPoints = (userData.level - 1) * 200;
+  const progressInLevel = userData.points - currentLevelPoints;
+  const progressPercentage = Math.min((progressInLevel / 200) * 100, 100);
 
   return (
     <div className="min-h-screen bg-background">
@@ -136,27 +155,27 @@ export default function Profile() {
               {/* Info */}
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">{user.name}</h1>
-                  <span className="text-muted-foreground">{user.username}</span>
+                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">{userData.name}</h1>
+                  <span className="text-muted-foreground">{userData.username}</span>
                   <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium w-fit">
-                    {user.rank}
+                    {userData.rank}
                   </span>
                 </div>
                 
-                <p className="text-muted-foreground mb-4 max-w-xl">{user.bio}</p>
+                <p className="text-muted-foreground mb-4 max-w-xl">{userData.bio}</p>
                 
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    <span>{user.location}</span>
+                    <span>{userData.location}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <LinkIcon className="w-4 h-4" />
-                    <span>{user.website}</span>
+                    <span>{userData.website}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    <span>انضم في {user.joinDate}</span>
+                    <span>انضم في {userData.joinDate}</span>
                   </div>
                 </div>
 
@@ -179,13 +198,16 @@ export default function Profile() {
                     <Coins className="w-6 h-6 text-accent-foreground" />
                   </div>
                   <div>
-                    <div className="text-2xl font-black text-gradient-accent">{user.points}</div>
+                    <div className="text-2xl font-black text-gradient-accent">{userData.points}</div>
                     <div className="text-xs text-muted-foreground">نقطة</div>
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground mb-2">المستوى {user.level}</div>
+                <div className="text-sm text-muted-foreground mb-2">المستوى {userData.level}</div>
                 <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-accent rounded-full" style={{ width: "75%" }} />
+                  <div className="h-full bg-gradient-accent rounded-full transition-all" style={{ width: `${progressPercentage}%` }} />
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 text-center">
+                  {pointsToNextLevel - userData.points} نقطة للمستوى التالي
                 </div>
               </div>
             </div>
@@ -194,22 +216,22 @@ export default function Profile() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 relative">
               <div className="glass rounded-xl p-4 border-border/50 text-center">
                 <Briefcase className="w-6 h-6 text-primary mx-auto mb-2" />
-                <div className="text-2xl font-bold text-foreground">{user.stats.projects}</div>
+                <div className="text-2xl font-bold text-foreground">{userData.stats.projects}</div>
                 <div className="text-sm text-muted-foreground">مشروع</div>
               </div>
               <div className="glass rounded-xl p-4 border-border/50 text-center">
                 <HelpCircle className="w-6 h-6 text-accent mx-auto mb-2" />
-                <div className="text-2xl font-bold text-foreground">{user.stats.answers}</div>
+                <div className="text-2xl font-bold text-foreground">{userData.stats.answers}</div>
                 <div className="text-sm text-muted-foreground">إجابة</div>
               </div>
               <div className="glass rounded-xl p-4 border-border/50 text-center">
                 <BookOpen className="w-6 h-6 text-success mx-auto mb-2" />
-                <div className="text-2xl font-bold text-foreground">{user.stats.courses}</div>
+                <div className="text-2xl font-bold text-foreground">{userData.stats.courses}</div>
                 <div className="text-sm text-muted-foreground">دورة</div>
               </div>
               <div className="glass rounded-xl p-4 border-border/50 text-center">
                 <Star className="w-6 h-6 text-warning mx-auto mb-2" />
-                <div className="text-2xl font-bold text-foreground">{user.stats.rating}</div>
+                <div className="text-2xl font-bold text-foreground">{userData.stats.rating}</div>
                 <div className="text-sm text-muted-foreground">تقييم</div>
               </div>
             </div>
@@ -281,6 +303,16 @@ export default function Profile() {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === "الشارات" && (
+              <div>
+                <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-accent" />
+                  شاراتي وإنجازاتي
+                </h3>
+                <BadgeDisplay badges={userData.badges as string[]} showAll />
               </div>
             )}
 
