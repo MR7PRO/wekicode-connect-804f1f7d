@@ -13,13 +13,21 @@ import {
   Calendar,
   ArrowLeft,
   CheckCircle,
-  Bookmark
+  Bookmark,
+  BookmarkCheck,
+  Plus,
+  Send,
+  X
 } from "lucide-react";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
 const jobTypes = ["الكل", "عمل عن بُعد", "عقد", "مشروع واحد", "دوام جزئي"];
 
-const jobs = [
+const initialJobs = [
   {
     id: 1,
     title: "تطوير تطبيق ويب متكامل باستخدام React و Node.js",
@@ -100,11 +108,169 @@ const jobs = [
     verified: true,
     featured: false
   },
+  {
+    id: 6,
+    title: "تطوير تطبيق Flutter للأندرويد والآيفون",
+    company: "شركة التطبيقات الذكية",
+    companyLogo: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=100&h=100&fit=crop",
+    budget: "$800 - $1,500",
+    type: "مشروع واحد",
+    duration: "شهر - شهرين",
+    location: "عن بُعد",
+    posted: "منذ 4 ساعات",
+    proposals: 10,
+    skills: ["Flutter", "Dart", "Firebase", "REST API"],
+    description: "نبحث عن مطور Flutter لبناء تطبيق حجز مواعيد طبية...",
+    verified: true,
+    featured: true
+  },
+  {
+    id: 7,
+    title: "إعداد خوادم وبنية تحتية AWS",
+    company: "شركة الحوسبة السحابية",
+    companyLogo: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=100&h=100&fit=crop",
+    budget: "$400 - $700",
+    type: "عقد",
+    duration: "أسبوعين",
+    location: "عن بُعد",
+    posted: "منذ 5 ساعات",
+    proposals: 4,
+    skills: ["AWS", "Docker", "Kubernetes", "Linux"],
+    description: "مطلوب DevOps Engineer لإعداد بيئة الإنتاج على AWS...",
+    verified: true,
+    featured: false
+  },
+  {
+    id: 8,
+    title: "تطوير لعبة ويب تعليمية للأطفال",
+    company: "مؤسسة التعليم الرقمي",
+    companyLogo: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=100&h=100&fit=crop",
+    budget: "$600 - $1,200",
+    type: "مشروع واحد",
+    duration: "شهر واحد",
+    location: "عن بُعد",
+    posted: "منذ يوم",
+    proposals: 6,
+    skills: ["JavaScript", "Canvas", "Game Development", "Animation"],
+    description: "نريد تطوير لعبة تعليمية تفاعلية للأطفال من سن 6-12...",
+    verified: false,
+    featured: false
+  },
 ];
 
 export default function Jobs() {
   const [selectedType, setSelectedType] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
+  const [jobs, setJobs] = useState(initialJobs);
+  const [savedJobs, setSavedJobs] = useState<number[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<typeof initialJobs[0] | null>(null);
+  
+  // New job form
+  const [newJob, setNewJob] = useState({
+    title: "",
+    description: "",
+    budget: "",
+    duration: "",
+    skills: "",
+    type: "مشروع واحد"
+  });
+
+  // Apply form
+  const [applyForm, setApplyForm] = useState({
+    coverLetter: "",
+    portfolio: "",
+    expectedBudget: ""
+  });
+
+  const filteredJobs = jobs.filter(j => {
+    const matchesType = selectedType === "الكل" || j.type === selectedType;
+    const matchesSearch = j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          j.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          j.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesType && matchesSearch;
+  });
+
+  const handlePostJob = () => {
+    if (!newJob.title || !newJob.description || !newJob.budget) {
+      toast({
+        title: "خطأ",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const job = {
+      id: jobs.length + 1,
+      title: newJob.title,
+      company: "شركتك",
+      companyLogo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop",
+      budget: newJob.budget,
+      type: newJob.type,
+      duration: newJob.duration || "غير محدد",
+      location: "عن بُعد",
+      posted: "الآن",
+      proposals: 0,
+      skills: newJob.skills.split(",").map(s => s.trim()).filter(Boolean),
+      description: newJob.description,
+      verified: false,
+      featured: false
+    };
+
+    setJobs([job, ...jobs]);
+    setNewJob({ title: "", description: "", budget: "", duration: "", skills: "", type: "مشروع واحد" });
+    setIsPostDialogOpen(false);
+    
+    toast({
+      title: "تم نشر المشروع! 🎉",
+      description: "سيظهر مشروعك للمستقلين الآن",
+    });
+  };
+
+  const handleApply = () => {
+    if (!applyForm.coverLetter) {
+      toast({
+        title: "خطأ",
+        description: "يرجى كتابة رسالة التقديم",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (selectedJob) {
+      setAppliedJobs([...appliedJobs, selectedJob.id]);
+      setJobs(jobs.map(j => 
+        j.id === selectedJob.id ? { ...j, proposals: j.proposals + 1 } : j
+      ));
+    }
+    
+    setApplyForm({ coverLetter: "", portfolio: "", expectedBudget: "" });
+    setIsApplyDialogOpen(false);
+    setSelectedJob(null);
+    
+    toast({
+      title: "تم إرسال طلبك! 🎉",
+      description: "ستحصل على إشعار عند قبول طلبك (+5 نقاط)",
+    });
+  };
+
+  const toggleSaveJob = (jobId: number) => {
+    if (savedJobs.includes(jobId)) {
+      setSavedJobs(savedJobs.filter(id => id !== jobId));
+      toast({ title: "تم إزالة المشروع من المحفوظات" });
+    } else {
+      setSavedJobs([...savedJobs, jobId]);
+      toast({ title: "تم حفظ المشروع ⭐" });
+    }
+  };
+
+  const openApplyDialog = (job: typeof initialJobs[0]) => {
+    setSelectedJob(job);
+    setIsApplyDialogOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,17 +290,90 @@ export default function Jobs() {
                 تصفح المشاريع وقدم على العمل الذي يناسب مهاراتك
               </p>
             </div>
-            <Button variant="accent" size="lg">
-              <Briefcase className="w-5 h-5" />
-              انشر مشروعاً
-            </Button>
+            
+            <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="accent" size="lg">
+                  <Briefcase className="w-5 h-5" />
+                  انشر مشروعاً
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">انشر مشروعك</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">عنوان المشروع *</label>
+                    <Input
+                      placeholder="مثال: تطوير تطبيق ويب باستخدام React"
+                      value={newJob.title}
+                      onChange={(e) => setNewJob({...newJob, title: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">وصف المشروع *</label>
+                    <Textarea
+                      placeholder="اشرح تفاصيل المشروع والمتطلبات..."
+                      rows={4}
+                      value={newJob.description}
+                      onChange={(e) => setNewJob({...newJob, description: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">الميزانية *</label>
+                      <Input
+                        placeholder="$100 - $500"
+                        value={newJob.budget}
+                        onChange={(e) => setNewJob({...newJob, budget: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">المدة المتوقعة</label>
+                      <Input
+                        placeholder="أسبوع - شهر"
+                        value={newJob.duration}
+                        onChange={(e) => setNewJob({...newJob, duration: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">نوع العمل</label>
+                      <select
+                        className="w-full h-10 rounded-lg bg-secondary border border-border px-3"
+                        value={newJob.type}
+                        onChange={(e) => setNewJob({...newJob, type: e.target.value})}
+                      >
+                        {jobTypes.filter(t => t !== "الكل").map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">المهارات المطلوبة</label>
+                      <Input
+                        placeholder="React, Node.js..."
+                        value={newJob.skills}
+                        onChange={(e) => setNewJob({...newJob, skills: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="hero" onClick={handlePostJob}>
+                    <Send className="w-4 h-4" />
+                    نشر المشروع
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="glass rounded-xl p-4 border-border/50">
               <Briefcase className="w-6 h-6 text-primary mb-2" />
-              <div className="text-2xl font-bold text-foreground">156</div>
+              <div className="text-2xl font-bold text-foreground">{jobs.length}</div>
               <div className="text-sm text-muted-foreground">فرصة متاحة</div>
             </div>
             <div className="glass rounded-xl p-4 border-border/50">
@@ -191,19 +430,27 @@ export default function Jobs() {
 
           {/* Jobs List */}
           <div className="space-y-4">
-            {jobs.map((job) => (
+            {filteredJobs.map((job) => (
               <div
                 key={job.id}
-                className={`glass rounded-2xl p-6 border-border/50 hover:border-primary/30 hover-lift transition-all cursor-pointer ${
+                className={`glass rounded-2xl p-6 border-border/50 hover:border-primary/30 hover-lift transition-all ${
                   job.featured ? "border-accent/30 bg-accent/5" : ""
-                }`}
+                } ${appliedJobs.includes(job.id) ? "border-success/30 bg-success/5" : ""}`}
               >
-                {job.featured && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <Star className="w-4 h-4 text-accent fill-accent" />
-                    <span className="text-xs font-medium text-accent">مميز</span>
-                  </div>
-                )}
+                <div className="flex items-start gap-2 mb-3">
+                  {job.featured && (
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-accent fill-accent" />
+                      <span className="text-xs font-medium text-accent">مميز</span>
+                    </div>
+                  )}
+                  {appliedJobs.includes(job.id) && (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-success" />
+                      <span className="text-xs font-medium text-success">تم التقديم</span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* Company Logo */}
@@ -217,8 +464,15 @@ export default function Jobs() {
                       <h3 className="text-lg font-bold text-foreground hover:text-primary transition-colors">
                         {job.title}
                       </h3>
-                      <button className="p-2 rounded-lg hover:bg-secondary transition-colors">
-                        <Bookmark className="w-5 h-5 text-muted-foreground hover:text-primary" />
+                      <button 
+                        onClick={() => toggleSaveJob(job.id)}
+                        className="p-2 rounded-lg hover:bg-secondary transition-colors"
+                      >
+                        {savedJobs.includes(job.id) ? (
+                          <BookmarkCheck className="w-5 h-5 text-primary" />
+                        ) : (
+                          <Bookmark className="w-5 h-5 text-muted-foreground hover:text-primary" />
+                        )}
                       </button>
                     </div>
 
@@ -273,10 +527,17 @@ export default function Jobs() {
                         </div>
                       </div>
 
-                      <Button variant="hero" size="sm">
-                        قدم الآن
-                        <ArrowLeft className="w-4 h-4" />
-                      </Button>
+                      {appliedJobs.includes(job.id) ? (
+                        <Button variant="secondary" size="sm" disabled>
+                          <CheckCircle className="w-4 h-4" />
+                          تم التقديم
+                        </Button>
+                      ) : (
+                        <Button variant="hero" size="sm" onClick={() => openApplyDialog(job)}>
+                          قدم الآن
+                          <ArrowLeft className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -284,14 +545,78 @@ export default function Jobs() {
             ))}
           </div>
 
+          {filteredJobs.length === 0 && (
+            <div className="text-center py-12">
+              <Briefcase className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-bold text-foreground mb-2">لا توجد فرص</h3>
+              <p className="text-muted-foreground mb-4">لم نجد أي فرص تطابق بحثك</p>
+              <Button variant="hero" onClick={() => setIsPostDialogOpen(true)}>
+                <Plus className="w-4 h-4" />
+                انشر مشروعك الأول
+              </Button>
+            </div>
+          )}
+
           {/* Load More */}
-          <div className="text-center mt-8">
-            <Button variant="outline" size="lg">
-              عرض المزيد من الفرص
-            </Button>
-          </div>
+          {filteredJobs.length > 0 && (
+            <div className="text-center mt-8">
+              <Button variant="outline" size="lg">
+                عرض المزيد من الفرص
+              </Button>
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Apply Dialog */}
+      <Dialog open={isApplyDialogOpen} onOpenChange={setIsApplyDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl">التقديم على المشروع</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="p-4 rounded-xl bg-secondary/50">
+              <h3 className="font-bold text-foreground mb-1">{selectedJob?.title}</h3>
+              <p className="text-sm text-muted-foreground">{selectedJob?.company}</p>
+              <p className="text-sm text-success font-medium mt-2">{selectedJob?.budget}</p>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">رسالة التقديم *</label>
+              <Textarea
+                placeholder="اشرح لماذا أنت مناسب لهذا المشروع..."
+                rows={5}
+                value={applyForm.coverLetter}
+                onChange={(e) => setApplyForm({...applyForm, coverLetter: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">رابط معرض أعمالك</label>
+                <Input
+                  placeholder="https://..."
+                  value={applyForm.portfolio}
+                  onChange={(e) => setApplyForm({...applyForm, portfolio: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">العرض المالي</label>
+                <Input
+                  placeholder="$500"
+                  value={applyForm.expectedBudget}
+                  onChange={(e) => setApplyForm({...applyForm, expectedBudget: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <Button className="w-full" variant="hero" onClick={handleApply}>
+              <Send className="w-4 h-4" />
+              إرسال الطلب
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
