@@ -11,7 +11,8 @@ import {
   X,
   Coins,
   LogOut,
-  Loader2
+  Loader2,
+  CreditCard
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProgressWidget } from "./ProgressWidget";
 
 const navLinks = [
   { path: "/", label: "الرئيسية", icon: Code2 },
@@ -30,6 +32,7 @@ const navLinks = [
   { path: "/jobs", label: "الوظائف", icon: Briefcase },
   { path: "/courses", label: "التعليم", icon: BookOpen },
   { path: "/rewards", label: "المكافآت", icon: Gift },
+  { path: "/billing", label: "الفواتير", icon: CreditCard },
 ];
 
 export function Navbar() {
@@ -80,17 +83,14 @@ export function Navbar() {
             })}
           </div>
 
-          {/* Points Display & Auth */}
+          {/* Progress Widget & Auth */}
           <div className="hidden md:flex items-center gap-3">
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             ) : user ? (
               <>
-                {/* Points badge */}
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-accent text-accent-foreground font-bold">
-                  <Coins className="w-5 h-5" />
-                  <span>{profile?.points ?? 0}</span>
-                </div>
+                {/* Progress Widget - Game-like level indicator */}
+                <ProgressWidget />
 
                 {/* User dropdown */}
                 <DropdownMenu>
@@ -174,12 +174,9 @@ export function Navbar() {
                 );
               })}
               <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                {user ? (
-                  <>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-accent text-accent-foreground font-bold">
-                      <Coins className="w-5 h-5" />
-                      <span>{profile?.points ?? 0}</span>
-                    </div>
+              {user ? (
+                <>
+                  <ProgressWidget />
                     <div className="flex items-center gap-2">
                       <Link to="/profile" onClick={() => setIsOpen(false)}>
                         <Button variant="ghost" size="sm">

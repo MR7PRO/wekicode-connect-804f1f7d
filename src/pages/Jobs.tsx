@@ -24,7 +24,7 @@ const jobs = [
     id: 1,
     title: "تطوير تطبيق ويب متكامل باستخدام React و Node.js",
     company: "شركة التقنية الحديثة",
-    companyAvatar: "ش",
+    companyLogo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop",
     budget: "$500 - $1,000",
     type: "مشروع واحد",
     duration: "2-4 أسابيع",
@@ -40,7 +40,7 @@ const jobs = [
     id: 2,
     title: "تصميم واجهات مستخدم لتطبيق موبايل",
     company: "ستارت أب ديجيتال",
-    companyAvatar: "س",
+    companyLogo: "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=100&h=100&fit=crop",
     budget: "$200 - $400",
     type: "مشروع واحد",
     duration: "أسبوع واحد",
@@ -56,7 +56,7 @@ const jobs = [
     id: 3,
     title: "بناء API باستخدام Python و FastAPI",
     company: "مؤسسة البيانات",
-    companyAvatar: "م",
+    companyLogo: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=100&h=100&fit=crop",
     budget: "$300 - $600",
     type: "عقد",
     duration: "شهر واحد",
@@ -72,7 +72,7 @@ const jobs = [
     id: 4,
     title: "تطوير متجر إلكتروني باستخدام Shopify",
     company: "متجر الأزياء",
-    companyAvatar: "م",
+    companyLogo: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop",
     budget: "$400 - $800",
     type: "مشروع واحد",
     duration: "2-3 أسابيع",
@@ -88,7 +88,7 @@ const jobs = [
     id: 5,
     title: "كتابة محتوى تقني وتوثيق API",
     company: "شركة البرمجيات",
-    companyAvatar: "ش",
+    companyLogo: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=100&h=100&fit=crop",
     budget: "$150 - $300",
     type: "دوام جزئي",
     duration: "مستمر",
@@ -206,9 +206,9 @@ export default function Jobs() {
                 )}
 
                 <div className="flex flex-col md:flex-row gap-4">
-                  {/* Company Avatar */}
-                  <div className="hidden md:flex w-14 h-14 rounded-xl bg-gradient-primary items-center justify-center text-xl font-bold text-primary-foreground">
-                    {job.companyAvatar}
+                  {/* Company Logo */}
+                  <div className="hidden md:block w-14 h-14 rounded-xl overflow-hidden">
+                    <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
                   </div>
 
                   {/* Content */}
