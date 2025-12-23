@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Code2, Mail, Lock, User, Loader2, Sparkles } from "lucide-react";
+import { Mail, Lock, User, Loader2, Sparkles } from "lucide-react";
+import wekicodeLogo from "@/assets/wekicode-logo.png";
 import { z } from "zod";
 
 const emailSchema = z.string().email("يرجى إدخال بريد إلكتروني صحيح");
@@ -138,11 +139,13 @@ export default function Auth() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform">
-              <Code2 className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold text-gradient-primary">wekicode</span>
+          <a href="/" className="flex items-center gap-3 group">
+            <img 
+              src={wekicodeLogo} 
+              alt="WekiCode Logo" 
+              className="w-16 h-16 object-contain group-hover:scale-110 transition-transform"
+            />
+            <span className="text-3xl font-bold text-gradient-primary">wekicode</span>
           </a>
         </div>
 
