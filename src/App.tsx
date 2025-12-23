@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/components/notifications/NotificationSystem";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
 import QuestionDetail from "./pages/QuestionDetail";
@@ -33,9 +34,12 @@ const App = () => (
               <Route path="/questions/:id" element={<QuestionDetail />} />
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/courses" element={<Courses />} />
-              <Route path="/rewards" element={<Rewards />} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/profile" element={<Profile />} />
+              {/* Protected Routes - require authentication */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/rewards" element={<Rewards />} />
+                <Route path="/billing" element={<Billing />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

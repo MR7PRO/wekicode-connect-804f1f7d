@@ -530,7 +530,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_question_answers: {
+        Args: { question_uuid: string }
+        Returns: undefined
+      }
+      increment_question_views: {
+        Args: { question_uuid: string }
+        Returns: undefined
+      }
+      increment_user_points: {
+        Args: { points_to_add: number }
+        Returns: undefined
+      }
+      update_profile_info: {
+        Args: {
+          p_avatar_url?: string
+          p_bio?: string
+          p_full_name?: string
+          p_skills?: string[]
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

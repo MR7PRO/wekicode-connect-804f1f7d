@@ -168,11 +168,8 @@ export default function Questions() {
       return;
     }
 
-    // Add points to user
-    await supabase
-      .from('profiles')
-      .update({ points: (user as any).points + 5 })
-      .eq('user_id', user.id);
+    // Use secure RPC function to increment points (prevents cheating and race conditions)
+    await supabase.rpc('increment_user_points', { points_to_add: 5 });
 
     toast({
       title: "تم نشر السؤال! 🎉",
