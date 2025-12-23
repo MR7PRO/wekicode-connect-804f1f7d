@@ -538,10 +538,6 @@ export type Database = {
         Args: { question_uuid: string }
         Returns: undefined
       }
-      increment_user_points: {
-        Args: { points_to_add: number }
-        Returns: undefined
-      }
       update_profile_info: {
         Args: {
           p_avatar_url?: string
