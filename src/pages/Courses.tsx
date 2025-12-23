@@ -57,7 +57,7 @@ interface Enrollment {
 }
 
 export default function Courses() {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
@@ -159,6 +159,45 @@ export default function Courses() {
       return;
     }
 
+    // Check if course requires points (not free and has a price)
+    if (!course.is_free && course.price && course.price > 0) {
+      // Refresh profile to get latest points
+      await refreshProfile();
+      
+      // Get fresh points from database
+      const { data: freshProfile } = await supabase
+        .from('profiles')
+        .select('points')
+        .eq('user_id', user.id)
+        .single();
+      
+      const currentPoints = freshProfile?.points ?? 0;
+      
+      if (currentPoints < course.price) {
+        toast({
+          title: "نقاط غير كافية",
+          description: `لديك ${currentPoints} نقطة وتحتاج ${course.price} نقطة. تحتاج ${course.price - currentPoints} نقطة إضافية`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Deduct points for paid course
+      const { error: pointsError } = await supabase
+        .from('profiles')
+        .update({ points: currentPoints - course.price })
+        .eq('user_id', user.id);
+
+      if (pointsError) {
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ أثناء خصم النقاط",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from('course_enrollments')
       .insert({
@@ -179,9 +218,12 @@ export default function Courses() {
 
     setEnrollments([...enrollments, { course_id: course.id, progress: 0, completed_lessons: [] }]);
     
+    // Refresh profile to update points in navbar
+    await refreshProfile();
+    
     toast({
       title: "تم التسجيل بنجاح! 🎉",
-      description: "ستحصل على نقاط عند إكمال الدورة",
+      description: course.is_free ? "ستحصل على نقاط عند إكمال الدورة" : `تم خصم ${course.price} نقطة`,
     });
   };
 
@@ -467,6 +509,8 @@ export default function Courses() {
                   const enrollment = getEnrollment(course.id);
                   const isEnrolled = !!enrollment;
                   const isFavorite = favoriteCourses.includes(course.id);
+                  const userPoints = profile?.points ?? 0;
+                  const canAfford = course.is_free || !course.price || userPoints >= course.price;
 
                   return (
                     <div
@@ -569,10 +613,11 @@ export default function Courses() {
 
                         {/* Action Button */}
                         <Button 
-                          variant={isEnrolled ? "secondary" : course.is_free ? "hero" : "outline"} 
+                          variant={isEnrolled ? "secondary" : course.is_free ? "hero" : canAfford ? "outline" : "secondary"} 
                           size="sm" 
                           className="w-full"
                           onClick={() => handleEnroll(course)}
+                          disabled={!isEnrolled && !course.is_free && !canAfford}
                         >
                           {isEnrolled ? (
                             <>
@@ -584,10 +629,15 @@ export default function Courses() {
                               <CheckCircle className="w-4 h-4" />
                               ابدأ مجاناً
                             </>
+                          ) : canAfford ? (
+                            <>
+                              <Coins className="w-4 h-4" />
+                              {course.price} نقطة
+                            </>
                           ) : (
                             <>
                               <Coins className="w-4 h-4" />
-                              ${course.price || 0}
+                              نقاط غير كافية ({course.price} نقطة)
                             </>
                           )}
                         </Button>
