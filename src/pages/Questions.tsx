@@ -168,8 +168,7 @@ export default function Questions() {
       return;
     }
 
-    // Use secure RPC function to increment points (prevents cheating and race conditions)
-    await supabase.rpc('increment_user_points', { points_to_add: 5 });
+    // Points are now awarded automatically by database trigger when question is created
 
     toast({
       title: "تم نشر السؤال! 🎉",

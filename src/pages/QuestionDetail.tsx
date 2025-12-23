@@ -297,11 +297,8 @@ export default function QuestionDetail() {
       return;
     }
 
-    // Use atomic RPC functions to prevent race conditions
-    await supabase.rpc('increment_question_answers', { question_uuid: id });
-    
-    // Use secure RPC function to increment points (prevents cheating and race conditions)
-    await supabase.rpc('increment_user_points', { points_to_add: 10 });
+    // Points are now awarded automatically by database trigger when answer is created
+    // Answer count is also updated automatically by trigger
 
     toast({
       title: "تم إضافة إجابتك! 🎉",
