@@ -63,9 +63,9 @@ export function Navbar() {
             <img 
               src={wekicodeLogo} 
               alt="WekiCode Logo" 
-              className="w-12 h-12 object-contain group-hover:scale-110 transition-transform"
+              className="w-14 h-14 object-contain group-hover:scale-110 transition-transform"
             />
-            <span className="text-xl font-bold text-gradient-primary">wekicode</span>
+            <span className="text-2xl font-bold text-gradient-primary">wekicode</span>
           </Link>
 
           {/* Desktop Navigation */}
