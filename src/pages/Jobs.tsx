@@ -17,162 +17,55 @@ import {
   BookmarkCheck,
   Plus,
   Send,
-  X
+  X,
+  Loader2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatDistanceToNow } from "date-fns";
+import { ar } from "date-fns/locale";
 
 const jobTypes = ["الكل", "عمل عن بُعد", "عقد", "مشروع واحد", "دوام جزئي"];
 
-const initialJobs = [
-  {
-    id: 1,
-    title: "تطوير تطبيق ويب متكامل باستخدام React و Node.js",
-    company: "شركة التقنية الحديثة",
-    companyLogo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop",
-    budget: "$500 - $1,000",
-    type: "مشروع واحد",
-    duration: "2-4 أسابيع",
-    location: "عن بُعد",
-    posted: "منذ ساعة",
-    proposals: 8,
-    skills: ["React", "Node.js", "MongoDB", "TypeScript"],
-    description: "نبحث عن مطور Full Stack لبناء تطبيق ويب لإدارة المهام مع واجهة مستخدم حديثة...",
-    verified: true,
-    featured: true
-  },
-  {
-    id: 2,
-    title: "تصميم واجهات مستخدم لتطبيق موبايل",
-    company: "ستارت أب ديجيتال",
-    companyLogo: "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=100&h=100&fit=crop",
-    budget: "$200 - $400",
-    type: "مشروع واحد",
-    duration: "أسبوع واحد",
-    location: "عن بُعد",
-    posted: "منذ 3 ساعات",
-    proposals: 12,
-    skills: ["Figma", "UI/UX", "Mobile Design"],
-    description: "مطلوب مصمم UI/UX لتصميم 10 شاشات لتطبيق توصيل طعام...",
-    verified: true,
-    featured: false
-  },
-  {
-    id: 3,
-    title: "بناء API باستخدام Python و FastAPI",
-    company: "مؤسسة البيانات",
-    companyLogo: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=100&h=100&fit=crop",
-    budget: "$300 - $600",
-    type: "عقد",
-    duration: "شهر واحد",
-    location: "عن بُعد",
-    posted: "منذ يوم",
-    proposals: 5,
-    skills: ["Python", "FastAPI", "PostgreSQL", "Docker"],
-    description: "نحتاج مطور Python لبناء RESTful API لنظام إدارة المخزون...",
-    verified: false,
-    featured: true
-  },
-  {
-    id: 4,
-    title: "تطوير متجر إلكتروني باستخدام Shopify",
-    company: "متجر الأزياء",
-    companyLogo: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop",
-    budget: "$400 - $800",
-    type: "مشروع واحد",
-    duration: "2-3 أسابيع",
-    location: "عن بُعد",
-    posted: "منذ يومين",
-    proposals: 15,
-    skills: ["Shopify", "Liquid", "E-commerce"],
-    description: "إنشاء متجر إلكتروني متكامل مع بوابة دفع وربط مع شركات الشحن...",
-    verified: true,
-    featured: false
-  },
-  {
-    id: 5,
-    title: "كتابة محتوى تقني وتوثيق API",
-    company: "شركة البرمجيات",
-    companyLogo: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=100&h=100&fit=crop",
-    budget: "$150 - $300",
-    type: "دوام جزئي",
-    duration: "مستمر",
-    location: "عن بُعد",
-    posted: "منذ 3 أيام",
-    proposals: 7,
-    skills: ["Technical Writing", "API Documentation", "Markdown"],
-    description: "مطلوب كاتب محتوى تقني لتوثيق APIs وكتابة أدلة المستخدم...",
-    verified: true,
-    featured: false
-  },
-  {
-    id: 6,
-    title: "تطوير تطبيق Flutter للأندرويد والآيفون",
-    company: "شركة التطبيقات الذكية",
-    companyLogo: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=100&h=100&fit=crop",
-    budget: "$800 - $1,500",
-    type: "مشروع واحد",
-    duration: "شهر - شهرين",
-    location: "عن بُعد",
-    posted: "منذ 4 ساعات",
-    proposals: 10,
-    skills: ["Flutter", "Dart", "Firebase", "REST API"],
-    description: "نبحث عن مطور Flutter لبناء تطبيق حجز مواعيد طبية...",
-    verified: true,
-    featured: true
-  },
-  {
-    id: 7,
-    title: "إعداد خوادم وبنية تحتية AWS",
-    company: "شركة الحوسبة السحابية",
-    companyLogo: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=100&h=100&fit=crop",
-    budget: "$400 - $700",
-    type: "عقد",
-    duration: "أسبوعين",
-    location: "عن بُعد",
-    posted: "منذ 5 ساعات",
-    proposals: 4,
-    skills: ["AWS", "Docker", "Kubernetes", "Linux"],
-    description: "مطلوب DevOps Engineer لإعداد بيئة الإنتاج على AWS...",
-    verified: true,
-    featured: false
-  },
-  {
-    id: 8,
-    title: "تطوير لعبة ويب تعليمية للأطفال",
-    company: "مؤسسة التعليم الرقمي",
-    companyLogo: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=100&h=100&fit=crop",
-    budget: "$600 - $1,200",
-    type: "مشروع واحد",
-    duration: "شهر واحد",
-    location: "عن بُعد",
-    posted: "منذ يوم",
-    proposals: 6,
-    skills: ["JavaScript", "Canvas", "Game Development", "Animation"],
-    description: "نريد تطوير لعبة تعليمية تفاعلية للأطفال من سن 6-12...",
-    verified: false,
-    featured: false
-  },
-];
+interface Job {
+  id: string;
+  title: string;
+  description: string;
+  company: string | null;
+  job_type: string;
+  skills: string[];
+  status: string;
+  budget_min: number | null;
+  budget_max: number | null;
+  applications_count: number;
+  user_id: string;
+  created_at: string;
+}
 
 export default function Jobs() {
+  const { user } = useAuth();
   const [selectedType, setSelectedType] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
-  const [jobs, setJobs] = useState(initialJobs);
-  const [savedJobs, setSavedJobs] = useState<number[]>([]);
-  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<typeof initialJobs[0] | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   // New job form
   const [newJob, setNewJob] = useState({
     title: "",
     description: "",
-    budget: "",
+    budgetMin: "",
+    budgetMax: "",
     duration: "",
     skills: "",
     type: "مشروع واحد"
@@ -185,16 +78,76 @@ export default function Jobs() {
     expectedBudget: ""
   });
 
+  useEffect(() => {
+    fetchJobs();
+    if (user) {
+      fetchUserFavorites();
+      fetchUserApplications();
+    }
+  }, [user]);
+
+  const fetchJobs = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching jobs:', error);
+      setLoading(false);
+      return;
+    }
+
+    setJobs(data || []);
+    setLoading(false);
+  };
+
+  const fetchUserFavorites = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_favorites')
+      .select('job_id')
+      .eq('user_id', user.id)
+      .not('job_id', 'is', null);
+
+    if (data) {
+      setSavedJobs(data.map(f => f.job_id!));
+    }
+  };
+
+  const fetchUserApplications = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('job_applications')
+      .select('job_id')
+      .eq('user_id', user.id);
+
+    if (data) {
+      setAppliedJobs(data.map(a => a.job_id));
+    }
+  };
+
   const filteredJobs = jobs.filter(j => {
-    const matchesType = selectedType === "الكل" || j.type === selectedType;
+    const matchesType = selectedType === "الكل" || j.job_type === selectedType;
     const matchesSearch = j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           j.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          j.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+                          (j.skills && j.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())));
     return matchesType && matchesSearch;
   });
 
-  const handlePostJob = () => {
-    if (!newJob.title || !newJob.description || !newJob.budget) {
+  const handlePostJob = async () => {
+    if (!user) {
+      toast({
+        title: "يجب تسجيل الدخول",
+        description: "قم بتسجيل الدخول لنشر مشروع",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!newJob.title || !newJob.description) {
       toast({
         title: "خطأ",
         description: "يرجى ملء جميع الحقول المطلوبة",
@@ -203,34 +156,54 @@ export default function Jobs() {
       return;
     }
 
-    const job = {
-      id: jobs.length + 1,
-      title: newJob.title,
-      company: "شركتك",
-      companyLogo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop",
-      budget: newJob.budget,
-      type: newJob.type,
-      duration: newJob.duration || "غير محدد",
-      location: "عن بُعد",
-      posted: "الآن",
-      proposals: 0,
-      skills: newJob.skills.split(",").map(s => s.trim()).filter(Boolean),
-      description: newJob.description,
-      verified: false,
-      featured: false
-    };
+    setSubmitting(true);
 
-    setJobs([job, ...jobs]);
-    setNewJob({ title: "", description: "", budget: "", duration: "", skills: "", type: "مشروع واحد" });
-    setIsPostDialogOpen(false);
-    
+    const { data, error } = await supabase
+      .from('jobs')
+      .insert({
+        user_id: user.id,
+        title: newJob.title,
+        description: newJob.description,
+        job_type: newJob.type,
+        skills: newJob.skills.split(",").map(s => s.trim()).filter(Boolean),
+        budget_min: newJob.budgetMin ? parseInt(newJob.budgetMin) : null,
+        budget_max: newJob.budgetMax ? parseInt(newJob.budgetMax) : null,
+        company: "شركتك"
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء نشر المشروع",
+        variant: "destructive"
+      });
+      setSubmitting(false);
+      return;
+    }
+
     toast({
       title: "تم نشر المشروع! 🎉",
       description: "سيظهر مشروعك للمستقلين الآن",
     });
+
+    setNewJob({ title: "", description: "", budgetMin: "", budgetMax: "", duration: "", skills: "", type: "مشروع واحد" });
+    setIsPostDialogOpen(false);
+    setSubmitting(false);
+    fetchJobs();
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
+    if (!user) {
+      toast({
+        title: "يجب تسجيل الدخول",
+        description: "قم بتسجيل الدخول للتقديم",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!applyForm.coverLetter) {
       toast({
         title: "خطأ",
@@ -240,36 +213,83 @@ export default function Jobs() {
       return;
     }
 
-    if (selectedJob) {
-      setAppliedJobs([...appliedJobs, selectedJob.id]);
-      setJobs(jobs.map(j => 
-        j.id === selectedJob.id ? { ...j, proposals: j.proposals + 1 } : j
-      ));
+    if (!selectedJob) return;
+
+    setSubmitting(true);
+
+    const { error } = await supabase
+      .from('job_applications')
+      .insert({
+        user_id: user.id,
+        job_id: selectedJob.id,
+        cover_letter: applyForm.coverLetter
+      });
+
+    if (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء التقديم",
+        variant: "destructive"
+      });
+      setSubmitting(false);
+      return;
     }
-    
+
+    setAppliedJobs([...appliedJobs, selectedJob.id]);
     setApplyForm({ coverLetter: "", portfolio: "", expectedBudget: "" });
     setIsApplyDialogOpen(false);
     setSelectedJob(null);
+    setSubmitting(false);
     
     toast({
       title: "تم إرسال طلبك! 🎉",
-      description: "ستحصل على إشعار عند قبول طلبك (+5 نقاط)",
+      description: "ستحصل على إشعار عند قبول طلبك",
     });
   };
 
-  const toggleSaveJob = (jobId: number) => {
+  const toggleSaveJob = async (jobId: string) => {
+    if (!user) {
+      toast({
+        title: "يجب تسجيل الدخول",
+        description: "قم بتسجيل الدخول لحفظ المشاريع",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (savedJobs.includes(jobId)) {
+      await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('job_id', jobId);
+      
       setSavedJobs(savedJobs.filter(id => id !== jobId));
       toast({ title: "تم إزالة المشروع من المحفوظات" });
     } else {
+      await supabase
+        .from('user_favorites')
+        .insert({ user_id: user.id, job_id: jobId });
+      
       setSavedJobs([...savedJobs, jobId]);
       toast({ title: "تم حفظ المشروع ⭐" });
     }
   };
 
-  const openApplyDialog = (job: typeof initialJobs[0]) => {
+  const openApplyDialog = (job: Job) => {
     setSelectedJob(job);
     setIsApplyDialogOpen(true);
+  };
+
+  const getBudgetString = (job: Job) => {
+    if (job.budget_min && job.budget_max) {
+      return `$${job.budget_min} - $${job.budget_max}`;
+    } else if (job.budget_min) {
+      return `$${job.budget_min}+`;
+    } else if (job.budget_max) {
+      return `حتى $${job.budget_max}`;
+    }
+    return "غير محدد";
   };
 
   return (
@@ -322,19 +342,21 @@ export default function Jobs() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">الميزانية *</label>
+                      <label className="text-sm font-medium text-foreground mb-2 block">الميزانية الدنيا ($)</label>
                       <Input
-                        placeholder="$100 - $500"
-                        value={newJob.budget}
-                        onChange={(e) => setNewJob({...newJob, budget: e.target.value})}
+                        type="number"
+                        placeholder="100"
+                        value={newJob.budgetMin}
+                        onChange={(e) => setNewJob({...newJob, budgetMin: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">المدة المتوقعة</label>
+                      <label className="text-sm font-medium text-foreground mb-2 block">الميزانية القصوى ($)</label>
                       <Input
-                        placeholder="أسبوع - شهر"
-                        value={newJob.duration}
-                        onChange={(e) => setNewJob({...newJob, duration: e.target.value})}
+                        type="number"
+                        placeholder="500"
+                        value={newJob.budgetMax}
+                        onChange={(e) => setNewJob({...newJob, budgetMax: e.target.value})}
                       />
                     </div>
                   </div>
@@ -360,9 +382,15 @@ export default function Jobs() {
                       />
                     </div>
                   </div>
-                  <Button className="w-full" variant="hero" onClick={handlePostJob}>
-                    <Send className="w-4 h-4" />
-                    نشر المشروع
+                  <Button className="w-full" variant="hero" onClick={handlePostJob} disabled={submitting}>
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        نشر المشروع
+                      </>
+                    )}
                   </Button>
                 </div>
               </DialogContent>
@@ -428,142 +456,128 @@ export default function Jobs() {
             ))}
           </div>
 
-          {/* Jobs List */}
-          <div className="space-y-4">
-            {filteredJobs.map((job) => (
-              <div
-                key={job.id}
-                className={`glass rounded-2xl p-6 border-border/50 hover:border-primary/30 hover-lift transition-all ${
-                  job.featured ? "border-accent/30 bg-accent/5" : ""
-                } ${appliedJobs.includes(job.id) ? "border-success/30 bg-success/5" : ""}`}
-              >
-                <div className="flex items-start gap-2 mb-3">
-                  {job.featured && (
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-accent fill-accent" />
-                      <span className="text-xs font-medium text-accent">مميز</span>
-                    </div>
-                  )}
-                  {appliedJobs.includes(job.id) && (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-success" />
-                      <span className="text-xs font-medium text-success">تم التقديم</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-4">
-                  {/* Company Logo */}
-                  <div className="hidden md:block w-14 h-14 rounded-xl overflow-hidden">
-                    <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <h3 className="text-lg font-bold text-foreground hover:text-primary transition-colors">
-                        {job.title}
-                      </h3>
-                      <button 
-                        onClick={() => toggleSaveJob(job.id)}
-                        className="p-2 rounded-lg hover:bg-secondary transition-colors"
-                      >
-                        {savedJobs.includes(job.id) ? (
-                          <BookmarkCheck className="w-5 h-5 text-primary" />
-                        ) : (
-                          <Bookmark className="w-5 h-5 text-muted-foreground hover:text-primary" />
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 mb-3 text-sm">
-                      <span className="flex items-center gap-1 text-foreground">
-                        {job.company}
-                        {job.verified && (
-                          <CheckCircle className="w-4 h-4 text-primary" />
-                        )}
-                      </span>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="flex items-center gap-1 text-success font-medium">
-                        <DollarSign className="w-4 h-4" />
-                        {job.budget}
-                      </span>
-                    </div>
-
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                      {job.description}
-                    </p>
-
-                    {/* Skills */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {job.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="px-3 py-1 rounded-lg bg-primary/10 text-primary text-xs font-medium"
-                        >
-                          {skill}
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              {/* Jobs List */}
+              <div className="space-y-4">
+                {filteredJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className={`glass rounded-2xl p-6 border-border/50 hover:border-primary/30 hover-lift transition-all ${
+                      appliedJobs.includes(job.id) ? "border-success/30 bg-success/5" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-2 mb-3">
+                      {appliedJobs.includes(job.id) && (
+                        <span className="px-2 py-1 rounded-md bg-success/10 text-success text-xs font-medium flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          تم التقديم
                         </span>
-                      ))}
+                      )}
+                      <span className="px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                        {job.job_type}
+                      </span>
                     </div>
 
-                    {/* Meta */}
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{job.location}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{job.duration}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{job.posted}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>{job.proposals} عرض</span>
-                        </div>
+                    <div className="flex flex-col md:flex-row md:items-start gap-4">
+                      {/* Company Logo */}
+                      <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center text-lg font-bold text-primary-foreground shrink-0">
+                        {job.company?.charAt(0) || 'ش'}
                       </div>
 
-                      {appliedJobs.includes(job.id) ? (
-                        <Button variant="secondary" size="sm" disabled>
-                          <CheckCircle className="w-4 h-4" />
-                          تم التقديم
-                        </Button>
-                      ) : (
-                        <Button variant="hero" size="sm" onClick={() => openApplyDialog(job)}>
-                          قدم الآن
-                          <ArrowLeft className="w-4 h-4" />
-                        </Button>
-                      )}
+                      {/* Content */}
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-foreground mb-1">
+                          {job.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                          <span>{job.company || 'شركة'}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            عن بُعد
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                          {job.description}
+                        </p>
+
+                        {/* Skills */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {job.skills?.slice(0, 4).map((skill) => (
+                            <span
+                              key={skill}
+                              className="px-2 py-1 rounded-md bg-secondary text-secondary-foreground text-xs"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                          {job.skills && job.skills.length > 4 && (
+                            <span className="px-2 py-1 rounded-md bg-secondary text-secondary-foreground text-xs">
+                              +{job.skills.length - 4}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Meta & Actions */}
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1 font-bold text-success">
+                              <DollarSign className="w-4 h-4" />
+                              <span>{getBudgetString(job)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>{job.applications_count || 0} عرض</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              <span>{formatDistanceToNow(new Date(job.created_at), { locale: ar, addSuffix: true })}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => toggleSaveJob(job.id)}
+                              className="p-2 rounded-lg hover:bg-secondary transition-colors"
+                            >
+                              {savedJobs.includes(job.id) ? (
+                                <BookmarkCheck className="w-5 h-5 text-primary" />
+                              ) : (
+                                <Bookmark className="w-5 h-5 text-muted-foreground" />
+                              )}
+                            </button>
+                            {appliedJobs.includes(job.id) ? (
+                              <Button variant="secondary" size="sm" disabled>
+                                <CheckCircle className="w-4 h-4" />
+                                تم التقديم
+                              </Button>
+                            ) : (
+                              <Button variant="hero" size="sm" onClick={() => openApplyDialog(job)}>
+                                <Send className="w-4 h-4" />
+                                قدم الآن
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {filteredJobs.length === 0 && (
-            <div className="text-center py-12">
-              <Briefcase className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-bold text-foreground mb-2">لا توجد فرص</h3>
-              <p className="text-muted-foreground mb-4">لم نجد أي فرص تطابق بحثك</p>
-              <Button variant="hero" onClick={() => setIsPostDialogOpen(true)}>
-                <Plus className="w-4 h-4" />
-                انشر مشروعك الأول
-              </Button>
-            </div>
-          )}
-
-          {/* Load More */}
-          {filteredJobs.length > 0 && (
-            <div className="text-center mt-8">
-              <Button variant="outline" size="lg">
-                عرض المزيد من الفرص
-              </Button>
-            </div>
+              {filteredJobs.length === 0 && (
+                <div className="text-center py-20 text-muted-foreground">
+                  <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">لا توجد مشاريع مطابقة للبحث</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -574,24 +588,21 @@ export default function Jobs() {
           <DialogHeader>
             <DialogTitle className="text-xl">التقديم على المشروع</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="p-4 rounded-xl bg-secondary/50">
-              <h3 className="font-bold text-foreground mb-1">{selectedJob?.title}</h3>
-              <p className="text-sm text-muted-foreground">{selectedJob?.company}</p>
-              <p className="text-sm text-success font-medium mt-2">{selectedJob?.budget}</p>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">رسالة التقديم *</label>
-              <Textarea
-                placeholder="اشرح لماذا أنت مناسب لهذا المشروع..."
-                rows={5}
-                value={applyForm.coverLetter}
-                onChange={(e) => setApplyForm({...applyForm, coverLetter: e.target.value})}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+          {selectedJob && (
+            <div className="space-y-4 mt-4">
+              <div className="p-4 rounded-xl bg-secondary/50">
+                <h3 className="font-bold text-foreground mb-1">{selectedJob.title}</h3>
+                <p className="text-sm text-muted-foreground">{selectedJob.company}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">رسالة التقديم *</label>
+                <Textarea
+                  placeholder="اشرح لماذا أنت مناسب لهذا المشروع..."
+                  rows={4}
+                  value={applyForm.coverLetter}
+                  onChange={(e) => setApplyForm({...applyForm, coverLetter: e.target.value})}
+                />
+              </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">رابط معرض أعمالك</label>
                 <Input
@@ -601,20 +612,25 @@ export default function Jobs() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">العرض المالي</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">الميزانية المتوقعة</label>
                 <Input
-                  placeholder="$500"
+                  placeholder="$300"
                   value={applyForm.expectedBudget}
                   onChange={(e) => setApplyForm({...applyForm, expectedBudget: e.target.value})}
                 />
               </div>
+              <Button className="w-full" variant="hero" onClick={handleApply} disabled={submitting}>
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    إرسال الطلب
+                  </>
+                )}
+              </Button>
             </div>
-            
-            <Button className="w-full" variant="hero" onClick={handleApply}>
-              <Send className="w-4 h-4" />
-              إرسال الطلب
-            </Button>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 

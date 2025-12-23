@@ -19,192 +19,140 @@ import {
   PartyPopper,
   Loader2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const categories = ["الكل", "اشتراكات", "قسائم مالية", "خدمات", "هدايا", "أجهزة"];
 
-const initialRewards = [
-  {
-    id: 1,
-    title: "اشتراك شهري في الوورك سبيس",
-    description: "شهر كامل من العمل في مساحة مجهزة بالكهرباء والإنترنت السريع",
-    points: 500,
-    category: "اشتراكات",
-    icon: Zap,
-    color: "primary",
-    stock: 10,
-    popular: true
-  },
-  {
-    id: 2,
-    title: "قسيمة مالية $25",
-    description: "قسيمة قابلة للصرف أو التحويل إلى حسابك البنكي",
-    points: 250,
-    category: "قسائم مالية",
-    icon: CreditCard,
-    color: "success",
-    stock: 20,
-    popular: true
-  },
-  {
-    id: 3,
-    title: "قسيمة مالية $50",
-    description: "قسيمة قابلة للصرف أو التحويل إلى حسابك البنكي",
-    points: 480,
-    category: "قسائم مالية",
-    icon: CreditCard,
-    color: "success",
-    stock: 15,
-    popular: false
-  },
-  {
-    id: 4,
-    title: "يوم عمل في الوورك سبيس",
-    description: "يوم كامل من العمل مع كهرباء وإنترنت ومشروبات",
-    points: 30,
-    category: "اشتراكات",
-    icon: Coffee,
-    color: "accent",
-    stock: 50,
-    popular: false
-  },
-  {
-    id: 5,
-    title: "أسبوع في الوورك سبيس",
-    description: "أسبوع كامل من العمل في بيئة مثالية للإنتاجية",
-    points: 150,
-    category: "اشتراكات",
-    icon: Monitor,
-    color: "primary",
-    stock: 25,
-    popular: true
-  },
-  {
-    id: 6,
-    title: "اشتراك إنترنت إضافي",
-    description: "باقة إنترنت إضافية 10GB لجهازك الشخصي",
-    points: 80,
-    category: "خدمات",
-    icon: Wifi,
-    color: "warning",
-    stock: 30,
-    popular: false
-  },
-  {
-    id: 7,
-    title: "دورة مدفوعة مجانية",
-    description: "اختر أي دورة مدفوعة من المنصة واحصل عليها مجاناً",
-    points: 200,
-    category: "خدمات",
-    icon: Star,
-    color: "accent",
-    stock: 15,
-    popular: true
-  },
-  {
-    id: 8,
-    title: "كوب قهوة مجاني",
-    description: "كوب قهوة أو مشروب من اختيارك في الوورك سبيس",
-    points: 10,
-    category: "هدايا",
-    icon: Coffee,
-    color: "warning",
-    stock: 100,
-    popular: false
-  },
-  {
-    id: 9,
-    title: "سماعات بلوتوث",
-    description: "سماعات لاسلكية عالية الجودة للعمل والترفيه",
-    points: 800,
-    category: "أجهزة",
-    icon: Headphones,
-    color: "primary",
-    stock: 5,
-    popular: true
-  },
-  {
-    id: 10,
-    title: "شاحن متنقل 20000mAh",
-    description: "باور بانك سريع الشحن لأجهزتك المحمولة",
-    points: 350,
-    category: "أجهزة",
-    icon: Smartphone,
-    color: "success",
-    stock: 12,
-    popular: false
-  },
-  {
-    id: 11,
-    title: "تذكرة حضور فعالية تقنية",
-    description: "تذكرة مجانية لحضور أي فعالية تقنية قادمة",
-    points: 300,
-    category: "هدايا",
-    icon: Ticket,
-    color: "accent",
-    stock: 20,
-    popular: true
-  },
-  {
-    id: 12,
-    title: "قسيمة مالية $100",
-    description: "قسيمة قابلة للصرف أو التحويل إلى حسابك البنكي",
-    points: 900,
-    category: "قسائم مالية",
-    icon: CreditCard,
-    color: "success",
-    stock: 8,
-    popular: true
-  },
-];
+// Icon mapping for rewards
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  'zap': Zap,
+  'credit-card': CreditCard,
+  'coffee': Coffee,
+  'monitor': Monitor,
+  'wifi': Wifi,
+  'star': Star,
+  'headphones': Headphones,
+  'smartphone': Smartphone,
+  'ticket': Ticket,
+};
 
-const initialRedemptions = [
-  {
-    id: 1,
-    title: "يوم عمل في الوورك سبيس",
-    points: 30,
-    date: "2024-01-15",
-    status: "مستخدم",
-    code: "WK-2024-001"
-  },
-  {
-    id: 2,
-    title: "قسيمة مالية $25",
-    points: 250,
-    date: "2024-01-10",
-    status: "مفعل",
-    code: "VC-2024-025"
-  },
-];
+// Color mapping for categories
+const categoryColorMap: Record<string, string> = {
+  'اشتراكات': 'primary',
+  'قسائم مالية': 'success',
+  'خدمات': 'accent',
+  'هدايا': 'warning',
+  'أجهزة': 'primary'
+};
+
+interface Reward {
+  id: string;
+  title: string;
+  description: string;
+  points_cost: number;
+  category: string;
+  image_url: string | null;
+  is_active: boolean;
+  stock: number;
+}
+
+interface Redemption {
+  id: string;
+  reward_id: string;
+  points_spent: number;
+  redemption_code: string;
+  status: string;
+  created_at: string;
+  reward?: Reward;
+}
 
 export default function Rewards() {
+  const { user, profile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("الكل");
-  const [userPoints, setUserPoints] = useState(1250);
-  const [rewards, setRewards] = useState(initialRewards);
-  const [myRedemptions, setMyRedemptions] = useState(initialRedemptions);
-  const [selectedReward, setSelectedReward] = useState<typeof initialRewards[0] | null>(null);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [myRedemptions, setMyRedemptions] = useState<Redemption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [lastRedeemed, setLastRedeemed] = useState<typeof initialRewards[0] | null>(null);
+  const [lastRedeemed, setLastRedeemed] = useState<Reward | null>(null);
+
+  const userPoints = profile?.points || 0;
+
+  useEffect(() => {
+    fetchRewards();
+    if (user) {
+      fetchRedemptions();
+    }
+  }, [user]);
+
+  const fetchRewards = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('rewards')
+      .select('*')
+      .eq('is_active', true)
+      .order('points_cost', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching rewards:', error);
+      setLoading(false);
+      return;
+    }
+
+    setRewards(data || []);
+    setLoading(false);
+  };
+
+  const fetchRedemptions = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('reward_redemptions')
+      .select(`
+        *,
+        reward:rewards(*)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setMyRedemptions(data.map(r => ({
+        ...r,
+        reward: r.reward as Reward | undefined
+      })));
+    }
+  };
 
   const filteredRewards = rewards.filter(r => 
     selectedCategory === "الكل" || r.category === selectedCategory
   );
 
-  const handleRedeem = async (reward: typeof initialRewards[0]) => {
-    if (userPoints < reward.points) {
+  const handleRedeem = async (reward: Reward) => {
+    if (!user) {
       toast({
-        title: "نقاط غير كافية",
-        description: `تحتاج ${reward.points - userPoints} نقطة إضافية`,
+        title: "يجب تسجيل الدخول",
+        description: "قم بتسجيل الدخول لاستبدال المكافآت",
         variant: "destructive"
       });
       return;
     }
 
-    if (reward.stock <= 0) {
+    if (userPoints < reward.points_cost) {
+      toast({
+        title: "نقاط غير كافية",
+        description: `تحتاج ${reward.points_cost - userPoints} نقطة إضافية`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (reward.stock !== null && reward.stock <= 0) {
       toast({
         title: "نفذت الكمية",
         description: "هذه المكافأة غير متوفرة حالياً",
@@ -216,27 +164,32 @@ export default function Rewards() {
     setSelectedReward(reward);
     setIsRedeeming(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Generate redemption code
+    const redemptionCode = `RD-${Date.now().toString().slice(-6)}`;
 
-    // Deduct points
-    setUserPoints(prev => prev - reward.points);
-    
-    // Decrease stock
-    setRewards(rewards.map(r => 
-      r.id === reward.id ? { ...r, stock: r.stock - 1 } : r
-    ));
+    const { error } = await supabase
+      .from('reward_redemptions')
+      .insert({
+        user_id: user.id,
+        reward_id: reward.id,
+        points_spent: reward.points_cost,
+        redemption_code: redemptionCode,
+        status: 'pending'
+      });
 
-    // Add to redemptions
-    const newRedemption = {
-      id: myRedemptions.length + 1,
-      title: reward.title,
-      points: reward.points,
-      date: new Date().toISOString().split('T')[0],
-      status: "مفعل",
-      code: `RD-${Date.now().toString().slice(-6)}`
-    };
-    setMyRedemptions([newRedemption, ...myRedemptions]);
+    if (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء الاستبدال",
+        variant: "destructive"
+      });
+      setIsRedeeming(false);
+      return;
+    }
+
+    // Refresh data
+    await fetchRedemptions();
+    await fetchRewards();
 
     setIsRedeeming(false);
     setLastRedeemed(reward);
@@ -247,6 +200,30 @@ export default function Rewards() {
     setShowSuccess(false);
     setSelectedReward(null);
     setLastRedeemed(null);
+  };
+
+  const getIcon = (iconName: string | null) => {
+    if (!iconName) return Gift;
+    return iconMap[iconName] || Gift;
+  };
+
+  const getColorClass = (category: string) => {
+    const color = categoryColorMap[category] || 'primary';
+    return {
+      gradient: color === "primary" 
+        ? "from-primary/20 to-primary/5 border-primary/30" 
+        : color === "success"
+        ? "from-success/20 to-success/5 border-success/30"
+        : color === "accent"
+        ? "from-accent/20 to-accent/5 border-accent/30"
+        : "from-warning/20 to-warning/5 border-warning/30",
+      iconBg: color === "primary" ? "bg-primary/20" :
+              color === "success" ? "bg-success/20" :
+              color === "accent" ? "bg-accent/20" : "bg-warning/20",
+      iconColor: color === "primary" ? "text-primary" :
+                 color === "success" ? "text-success" :
+                 color === "accent" ? "text-accent" : "text-warning"
+    };
   };
 
   return (
@@ -295,16 +272,16 @@ export default function Rewards() {
                 <div className="text-sm text-muted-foreground">لكل إجابة</div>
               </div>
               <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                <div className="text-2xl font-bold text-gradient-accent mb-1">+50</div>
-                <div className="text-sm text-muted-foreground">لكل مشروع</div>
+                <div className="text-2xl font-bold text-gradient-accent mb-1">+5</div>
+                <div className="text-sm text-muted-foreground">لكل سؤال</div>
               </div>
               <div className="p-4 rounded-xl bg-secondary/50 text-center">
                 <div className="text-2xl font-bold text-gradient-primary mb-1">+25</div>
                 <div className="text-sm text-muted-foreground">لكل محتوى تعليمي</div>
               </div>
               <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                <div className="text-2xl font-bold text-gradient-accent mb-1">+15</div>
-                <div className="text-sm text-muted-foreground">لكل تقييم 5 نجوم</div>
+                <div className="text-2xl font-bold text-gradient-accent mb-1">+50</div>
+                <div className="text-sm text-muted-foreground">لكل مشروع</div>
               </div>
             </div>
           </div>
@@ -326,144 +303,143 @@ export default function Rewards() {
             ))}
           </div>
 
-          {/* Rewards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {filteredRewards.map((reward) => {
-              const Icon = reward.icon;
-              const canRedeem = userPoints >= reward.points && reward.stock > 0;
-              const colorClass = reward.color === "primary" 
-                ? "from-primary/20 to-primary/5 border-primary/30" 
-                : reward.color === "success"
-                ? "from-success/20 to-success/5 border-success/30"
-                : reward.color === "accent"
-                ? "from-accent/20 to-accent/5 border-accent/30"
-                : "from-warning/20 to-warning/5 border-warning/30";
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              {/* Rewards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {filteredRewards.map((reward) => {
+                  const Icon = getIcon(reward.image_url);
+                  const canRedeem = userPoints >= reward.points_cost && (reward.stock === null || reward.stock > 0);
+                  const colors = getColorClass(reward.category);
 
-              return (
-                <motion.div
-                  key={reward.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`glass rounded-2xl p-5 border hover-lift transition-all relative overflow-hidden bg-gradient-to-b ${colorClass} ${
-                    reward.stock === 0 ? "opacity-60" : ""
-                  }`}
-                >
-                  {reward.popular && (
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs font-bold flex items-center gap-1">
-                        <Star className="w-3 h-3" />
-                        شائع
-                      </span>
-                    </div>
-                  )}
+                  return (
+                    <motion.div
+                      key={reward.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={`glass rounded-2xl p-5 border hover-lift transition-all relative overflow-hidden bg-gradient-to-b ${colors.gradient} ${
+                        reward.stock !== null && reward.stock === 0 ? "opacity-60" : ""
+                      }`}
+                    >
+                      {reward.stock !== null && reward.stock === 0 && (
+                        <div className="absolute top-3 right-3">
+                          <span className="px-2 py-1 rounded-md bg-destructive/10 text-destructive text-xs font-bold">
+                            نفذت
+                          </span>
+                        </div>
+                      )}
 
-                  {reward.stock === 0 && (
-                    <div className="absolute top-3 right-3">
-                      <span className="px-2 py-1 rounded-md bg-destructive/10 text-destructive text-xs font-bold">
-                        نفذت
-                      </span>
-                    </div>
-                  )}
-
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${
-                    reward.color === "primary" ? "bg-primary/20" :
-                    reward.color === "success" ? "bg-success/20" :
-                    reward.color === "accent" ? "bg-accent/20" : "bg-warning/20"
-                  }`}>
-                    <Icon className={`w-7 h-7 ${
-                      reward.color === "primary" ? "text-primary" :
-                      reward.color === "success" ? "text-success" :
-                      reward.color === "accent" ? "text-accent" : "text-warning"
-                    }`} />
-                  </div>
-
-                  <h3 className="text-lg font-bold text-foreground mb-2">
-                    {reward.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {reward.description}
-                  </p>
-
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-1 text-lg font-bold text-gradient-accent">
-                      <Coins className="w-5 h-5 text-accent" />
-                      <span>{reward.points}</span>
-                    </div>
-                    <span className={`text-xs ${reward.stock <= 5 ? "text-destructive" : "text-muted-foreground"}`}>
-                      متبقي: {reward.stock}
-                    </span>
-                  </div>
-
-                  <Button 
-                    variant={canRedeem ? "hero" : "secondary"} 
-                    size="sm" 
-                    className="w-full"
-                    disabled={!canRedeem || isRedeeming}
-                    onClick={() => handleRedeem(reward)}
-                  >
-                    {isRedeeming && selectedReward?.id === reward.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        جاري الاستبدال...
-                      </>
-                    ) : canRedeem ? (
-                      <>
-                        <ShoppingBag className="w-4 h-4" />
-                        استبدال
-                      </>
-                    ) : reward.stock === 0 ? (
-                      "نفذت الكمية"
-                    ) : (
-                      <>
-                        <Clock className="w-4 h-4" />
-                        نقاط غير كافية
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* My Redemptions */}
-          <div className="glass rounded-2xl p-6 border-border/50">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <CheckCircle className="w-6 h-6 text-success" />
-              سجل الاستبدالات ({myRedemptions.length})
-            </h2>
-            
-            {myRedemptions.length > 0 ? (
-              <div className="space-y-3">
-                {myRedemptions.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
-                    <div>
-                      <div className="font-medium text-foreground">{item.title}</div>
-                      <div className="text-sm text-muted-foreground">{item.date}</div>
-                      <div className="text-xs text-primary font-mono mt-1">كود: {item.code}</div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-accent font-bold flex items-center gap-1">
-                        <Coins className="w-4 h-4" />
-                        {item.points}
+                      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colors.iconBg}`}>
+                        <Icon className={`w-7 h-7 ${colors.iconColor}`} />
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        item.status === "مفعل" 
-                          ? "bg-success/10 text-success" 
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {item.status}
-                      </span>
-                    </div>
+
+                      <h3 className="text-lg font-bold text-foreground mb-2">
+                        {reward.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                        {reward.description}
+                      </p>
+
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-1 text-lg font-bold text-gradient-accent">
+                          <Coins className="w-5 h-5 text-accent" />
+                          <span>{reward.points_cost}</span>
+                        </div>
+                        {reward.stock !== null && (
+                          <span className={`text-xs ${reward.stock <= 5 ? "text-destructive" : "text-muted-foreground"}`}>
+                            متبقي: {reward.stock}
+                          </span>
+                        )}
+                      </div>
+
+                      <Button 
+                        variant={canRedeem ? "hero" : "secondary"} 
+                        size="sm" 
+                        className="w-full"
+                        disabled={!canRedeem || isRedeeming}
+                        onClick={() => handleRedeem(reward)}
+                      >
+                        {isRedeeming && selectedReward?.id === reward.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            جاري الاستبدال...
+                          </>
+                        ) : canRedeem ? (
+                          <>
+                            <ShoppingBag className="w-4 h-4" />
+                            استبدال
+                          </>
+                        ) : reward.stock !== null && reward.stock === 0 ? (
+                          "نفذت الكمية"
+                        ) : (
+                          <>
+                            <Clock className="w-4 h-4" />
+                            نقاط غير كافية
+                          </>
+                        )}
+                      </Button>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {filteredRewards.length === 0 && (
+                <div className="text-center py-20 text-muted-foreground">
+                  <Gift className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">لا توجد مكافآت في هذا التصنيف</p>
+                </div>
+              )}
+
+              {/* My Redemptions */}
+              <div className="glass rounded-2xl p-6 border-border/50">
+                <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6 text-success" />
+                  سجل الاستبدالات ({myRedemptions.length})
+                </h2>
+                
+                {myRedemptions.length > 0 ? (
+                  <div className="space-y-3">
+                    {myRedemptions.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
+                        <div>
+                          <div className="font-medium text-foreground">{item.reward?.title || 'مكافأة'}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(item.created_at).toLocaleDateString('ar-SA')}
+                          </div>
+                          <div className="text-xs text-primary font-mono mt-1">كود: {item.redemption_code}</div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-accent font-bold flex items-center gap-1">
+                            <Coins className="w-4 h-4" />
+                            {item.points_spent}
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            item.status === "completed" 
+                              ? "bg-success/10 text-success" 
+                              : item.status === "pending"
+                              ? "bg-warning/10 text-warning"
+                              : "bg-muted text-muted-foreground"
+                          }`}>
+                            {item.status === "completed" ? "مكتمل" : item.status === "pending" ? "قيد المعالجة" : item.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    لم تقم بأي استبدالات بعد
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                لم تقم بأي استبدالات بعد
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </main>
 
@@ -483,19 +459,20 @@ export default function Rewards() {
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <p className="text-muted-foreground">
-              تم استبدال {lastRedeemed?.title} بنجاح!
+              تم استبدال <span className="text-foreground font-bold">{lastRedeemed?.title}</span> بنجاح!
             </p>
             <div className="p-4 rounded-xl bg-secondary/50">
-              <div className="text-sm text-muted-foreground mb-1">رصيدك المتبقي</div>
-              <div className="text-3xl font-black text-gradient-accent">{userPoints.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground">نقطة</div>
+              <div className="text-sm text-muted-foreground mb-1">تم خصم</div>
+              <div className="text-2xl font-bold text-gradient-accent flex items-center justify-center gap-2">
+                <Coins className="w-6 h-6 text-accent" />
+                {lastRedeemed?.points_cost} نقطة
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              ستجد تفاصيل المكافأة في سجل الاستبدالات
+              ستصلك رسالة على بريدك الإلكتروني تحتوي على تفاصيل المكافأة
             </p>
-            <Button className="w-full" variant="hero" onClick={closeSuccessDialog}>
-              <CheckCircle className="w-4 h-4" />
-              تم
+            <Button variant="hero" className="w-full" onClick={closeSuccessDialog}>
+              تمام!
             </Button>
           </div>
         </DialogContent>

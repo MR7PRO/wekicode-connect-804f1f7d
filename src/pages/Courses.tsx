@@ -18,200 +18,54 @@ import {
   Play,
   Heart,
   HeartOff,
-  Send
+  Send,
+  Loader2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const categories = ["الكل", "تطوير الويب", "تطوير الموبايل", "علم البيانات", "DevOps", "تصميم", "ذكاء اصطناعي"];
 
-const initialCourses = [
-  {
-    id: 1,
-    title: "دورة React.js الشاملة من الصفر إلى الاحتراف",
-    instructor: "أحمد محمد",
-    instructorAvatar: "أ",
-    category: "تطوير الويب",
-    level: "متوسط",
-    duration: "12 ساعة",
-    lessons: 45,
-    students: 234,
-    rating: 4.8,
-    reviews: 89,
-    type: "فيديو",
-    points: 50,
-    thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=200&fit=crop",
-    tags: ["React", "JavaScript", "Frontend"],
-    description: "تعلم React.js من الصفر وصولاً لبناء تطبيقات متقدمة مع أفضل الممارسات...",
-    free: false
-  },
-  {
-    id: 2,
-    title: "أساسيات Python للمبتدئين",
-    instructor: "سارة علي",
-    instructorAvatar: "س",
-    category: "علم البيانات",
-    level: "مبتدئ",
-    duration: "8 ساعات",
-    lessons: 32,
-    students: 567,
-    rating: 4.9,
-    reviews: 156,
-    type: "فيديو",
-    points: 30,
-    thumbnail: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
-    tags: ["Python", "Programming", "Beginner"],
-    description: "ابدأ رحلتك في البرمجة مع Python بطريقة سهلة ومبسطة...",
-    free: true
-  },
-  {
-    id: 3,
-    title: "دليل Git و GitHub للمطورين",
-    instructor: "محمد خالد",
-    instructorAvatar: "م",
-    category: "DevOps",
-    level: "مبتدئ",
-    duration: "4 ساعات",
-    lessons: 18,
-    students: 890,
-    rating: 4.7,
-    reviews: 234,
-    type: "مقال",
-    points: 15,
-    thumbnail: "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=400&h=200&fit=crop",
-    tags: ["Git", "GitHub", "Version Control"],
-    description: "تعلم أساسيات التحكم بالإصدارات والتعاون مع الفريق باستخدام Git...",
-    free: true
-  },
-  {
-    id: 4,
-    title: "تصميم واجهات المستخدم UI/UX",
-    instructor: "ياسمين أحمد",
-    instructorAvatar: "ي",
-    category: "تصميم",
-    level: "متوسط",
-    duration: "10 ساعات",
-    lessons: 38,
-    students: 345,
-    rating: 4.6,
-    reviews: 98,
-    type: "فيديو",
-    points: 40,
-    thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=200&fit=crop",
-    tags: ["Figma", "UI/UX", "Design"],
-    description: "أتقن تصميم واجهات المستخدم الجذابة والتجربة المثالية للمستخدم...",
-    free: false
-  },
-  {
-    id: 5,
-    title: "Node.js و Express.js للباك إند",
-    instructor: "عمر حسن",
-    instructorAvatar: "ع",
-    category: "تطوير الويب",
-    level: "متقدم",
-    duration: "15 ساعة",
-    lessons: 52,
-    students: 189,
-    rating: 4.8,
-    reviews: 67,
-    type: "فيديو",
-    points: 60,
-    thumbnail: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
-    tags: ["Node.js", "Express", "Backend"],
-    description: "بناء APIs قوية ومتكاملة مع Node.js و Express...",
-    free: false
-  },
-  {
-    id: 6,
-    title: "مقدمة في Docker و الحاويات",
-    instructor: "خالد عمر",
-    instructorAvatar: "خ",
-    category: "DevOps",
-    level: "متوسط",
-    duration: "6 ساعات",
-    lessons: 24,
-    students: 267,
-    rating: 4.5,
-    reviews: 78,
-    type: "فيديو",
-    points: 35,
-    thumbnail: "https://images.unsplash.com/photo-1605745341112-85968b19335b?w=400&h=200&fit=crop",
-    tags: ["Docker", "DevOps", "Containers"],
-    description: "تعلم كيفية استخدام Docker لتبسيط عملية التطوير والنشر...",
-    free: false
-  },
-  {
-    id: 7,
-    title: "تطوير تطبيقات Flutter للموبايل",
-    instructor: "نور الدين",
-    instructorAvatar: "ن",
-    category: "تطوير الموبايل",
-    level: "متوسط",
-    duration: "14 ساعة",
-    lessons: 48,
-    students: 312,
-    rating: 4.7,
-    reviews: 95,
-    type: "فيديو",
-    points: 55,
-    thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop",
-    tags: ["Flutter", "Dart", "Mobile"],
-    description: "بناء تطبيقات موبايل احترافية للأندرويد والآيفون بكود واحد...",
-    free: false
-  },
-  {
-    id: 8,
-    title: "أساسيات الذكاء الاصطناعي مع Python",
-    instructor: "ليلى حسين",
-    instructorAvatar: "ل",
-    category: "ذكاء اصطناعي",
-    level: "مبتدئ",
-    duration: "10 ساعات",
-    lessons: 35,
-    students: 421,
-    rating: 4.9,
-    reviews: 134,
-    type: "فيديو",
-    points: 45,
-    thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=200&fit=crop",
-    tags: ["AI", "Machine Learning", "Python"],
-    description: "دخول عالم الذكاء الاصطناعي وتعلم الآلة من البداية...",
-    free: true
-  },
-  {
-    id: 9,
-    title: "تصميم الجرافيك باستخدام Photoshop",
-    instructor: "ريم سعيد",
-    instructorAvatar: "ر",
-    category: "تصميم",
-    level: "مبتدئ",
-    duration: "8 ساعات",
-    lessons: 28,
-    students: 456,
-    rating: 4.6,
-    reviews: 112,
-    type: "فيديو",
-    points: 30,
-    thumbnail: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?w=400&h=200&fit=crop",
-    tags: ["Photoshop", "Design", "Graphics"],
-    description: "تعلم أساسيات التصميم الجرافيكي باستخدام Adobe Photoshop...",
-    free: false
-  },
-];
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  instructor: string;
+  category: string;
+  level: string;
+  duration: string | null;
+  lessons_count: number;
+  students_count: number;
+  rating: number | null;
+  image_url: string | null;
+  is_free: boolean;
+  price: number | null;
+  user_id: string;
+  created_at: string;
+}
+
+interface Enrollment {
+  course_id: string;
+  progress: number;
+  completed_lessons: number[];
+}
 
 export default function Courses() {
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
-  const [courses, setCourses] = useState(initialCourses);
-  const [enrolledCourses, setEnrolledCourses] = useState<number[]>([]);
-  const [favoriteCourses, setFavoriteCourses] = useState<number[]>([]);
-  const [courseProgress, setCourseProgress] = useState<{[key: number]: number}>({});
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [favoriteCourses, setFavoriteCourses] = useState<string[]>([]);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<typeof initialCourses[0] | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   // New course form
   const [newCourse, setNewCourse] = useState({
@@ -224,18 +78,80 @@ export default function Courses() {
     link: ""
   });
 
+  useEffect(() => {
+    fetchCourses();
+    if (user) {
+      fetchEnrollments();
+      fetchFavorites();
+    }
+  }, [user]);
+
+  const fetchCourses = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .order('students_count', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching courses:', error);
+      setLoading(false);
+      return;
+    }
+
+    setCourses(data || []);
+    setLoading(false);
+  };
+
+  const fetchEnrollments = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('course_enrollments')
+      .select('course_id, progress, completed_lessons')
+      .eq('user_id', user.id);
+
+    if (data) {
+      setEnrollments(data.map(e => ({
+        course_id: e.course_id,
+        progress: e.progress || 0,
+        completed_lessons: e.completed_lessons || []
+      })));
+    }
+  };
+
+  const fetchFavorites = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_favorites')
+      .select('course_id')
+      .eq('user_id', user.id)
+      .not('course_id', 'is', null);
+
+    if (data) {
+      setFavoriteCourses(data.map(f => f.course_id!));
+    }
+  };
+
   const filteredCourses = courses.filter(c => {
     const matchesCategory = selectedCategory === "الكل" || c.category === selectedCategory;
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          c.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+                          c.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const handleEnroll = (course: typeof initialCourses[0]) => {
-    if (enrolledCourses.includes(course.id)) {
-      // Already enrolled, start course
-      setSelectedCourse(course);
+  const handleEnroll = async (course: Course) => {
+    if (!user) {
+      toast({
+        title: "يجب تسجيل الدخول",
+        description: "قم بتسجيل الدخول للتسجيل في الدورة",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const isEnrolled = enrollments.some(e => e.course_id === course.id);
+    
+    if (isEnrolled) {
       toast({
         title: "استئناف الدورة 📚",
         description: `جاري تحميل ${course.title}...`,
@@ -243,51 +159,71 @@ export default function Courses() {
       return;
     }
 
-    setEnrolledCourses([...enrolledCourses, course.id]);
-    setCourseProgress({ ...courseProgress, [course.id]: 0 });
-    setCourses(courses.map(c => 
-      c.id === course.id ? { ...c, students: c.students + 1 } : c
-    ));
+    const { error } = await supabase
+      .from('course_enrollments')
+      .insert({
+        user_id: user.id,
+        course_id: course.id,
+        progress: 0,
+        completed_lessons: []
+      });
+
+    if (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء التسجيل",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setEnrollments([...enrollments, { course_id: course.id, progress: 0, completed_lessons: [] }]);
     
     toast({
       title: "تم التسجيل بنجاح! 🎉",
-      description: `ستحصل على +${course.points} نقاط عند إكمال الدورة`,
+      description: "ستحصل على نقاط عند إكمال الدورة",
     });
   };
 
-  const toggleFavorite = (courseId: number) => {
+  const toggleFavorite = async (courseId: string) => {
+    if (!user) {
+      toast({
+        title: "يجب تسجيل الدخول",
+        description: "قم بتسجيل الدخول لإضافة للمفضلة",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (favoriteCourses.includes(courseId)) {
+      await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('course_id', courseId);
+      
       setFavoriteCourses(favoriteCourses.filter(id => id !== courseId));
       toast({ title: "تم إزالة الدورة من المفضلة" });
     } else {
+      await supabase
+        .from('user_favorites')
+        .insert({ user_id: user.id, course_id: courseId });
+      
       setFavoriteCourses([...favoriteCourses, courseId]);
       toast({ title: "تم إضافة الدورة للمفضلة ❤️" });
     }
   };
 
-  const handleWatchLesson = (courseId: number) => {
-    const currentProgress = courseProgress[courseId] || 0;
-    const course = courses.find(c => c.id === courseId);
-    if (!course) return;
-
-    const newProgress = Math.min(currentProgress + Math.round(100 / course.lessons), 100);
-    setCourseProgress({ ...courseProgress, [courseId]: newProgress });
-
-    if (newProgress >= 100) {
+  const handleShareCourse = async () => {
+    if (!user) {
       toast({
-        title: "أكملت الدورة! 🎉",
-        description: `حصلت على +${course.points} نقاط`,
+        title: "يجب تسجيل الدخول",
+        description: "قم بتسجيل الدخول لمشاركة محتوى",
+        variant: "destructive"
       });
-    } else {
-      toast({
-        title: "أحسنت! 👏",
-        description: `التقدم: ${newProgress}%`,
-      });
+      return;
     }
-    setSelectedCourse(null);
-  };
 
-  const handleShareCourse = () => {
     if (!newCourse.title || !newCourse.description) {
       toast({
         title: "خطأ",
@@ -297,34 +233,45 @@ export default function Courses() {
       return;
     }
 
-    const course = {
-      id: courses.length + 1,
-      title: newCourse.title,
-      instructor: "أنت",
-      instructorAvatar: "أ",
-      category: newCourse.category,
-      level: newCourse.level,
-      duration: newCourse.duration || "غير محدد",
-      lessons: 10,
-      students: 0,
-      rating: 0,
-      reviews: 0,
-      type: newCourse.type,
-      points: 25,
-      thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop",
-      tags: [newCourse.category],
-      description: newCourse.description,
-      free: true
-    };
+    setSubmitting(true);
 
-    setCourses([course, ...courses]);
-    setNewCourse({ title: "", description: "", category: "تطوير الويب", level: "مبتدئ", duration: "", type: "فيديو", link: "" });
-    setIsShareDialogOpen(false);
-    
+    const { error } = await supabase
+      .from('courses')
+      .insert({
+        user_id: user.id,
+        title: newCourse.title,
+        description: newCourse.description,
+        instructor: "أنت",
+        category: newCourse.category,
+        level: newCourse.level,
+        duration: newCourse.duration || null,
+        is_free: true,
+        lessons_count: 10
+      });
+
+    if (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء نشر المحتوى",
+        variant: "destructive"
+      });
+      setSubmitting(false);
+      return;
+    }
+
     toast({
       title: "تم نشر المحتوى! 🎉",
-      description: "ستحصل على +25 نقاط عند أول طالب مسجل",
+      description: "ستحصل على نقاط عند أول طالب مسجل",
     });
+
+    setNewCourse({ title: "", description: "", category: "تطوير الويب", level: "مبتدئ", duration: "", type: "فيديو", link: "" });
+    setIsShareDialogOpen(false);
+    setSubmitting(false);
+    fetchCourses();
+  };
+
+  const getEnrollment = (courseId: string) => {
+    return enrollments.find(e => e.course_id === courseId);
   };
 
   return (
@@ -430,9 +377,15 @@ export default function Courses() {
                       onChange={(e) => setNewCourse({...newCourse, link: e.target.value})}
                     />
                   </div>
-                  <Button className="w-full" variant="hero" onClick={handleShareCourse}>
-                    <Send className="w-4 h-4" />
-                    نشر المحتوى (+25 نقاط)
+                  <Button className="w-full" variant="hero" onClick={handleShareCourse} disabled={submitting}>
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        نشر المحتوى (+25 نقاط)
+                      </>
+                    )}
                   </Button>
                 </div>
               </DialogContent>
@@ -448,16 +401,16 @@ export default function Courses() {
             </div>
             <div className="glass rounded-xl p-4 border-border/50">
               <FileText className="w-6 h-6 text-accent mb-2" />
-              <div className="text-2xl font-bold text-foreground">{courses.filter(c => c.type === "مقال").length}</div>
-              <div className="text-sm text-muted-foreground">مقال</div>
+              <div className="text-2xl font-bold text-foreground">{courses.filter(c => c.is_free).length}</div>
+              <div className="text-sm text-muted-foreground">دورة مجانية</div>
             </div>
             <div className="glass rounded-xl p-4 border-border/50">
               <Users className="w-6 h-6 text-success mb-2" />
-              <div className="text-2xl font-bold text-foreground">{courses.reduce((acc, c) => acc + c.students, 0).toLocaleString()}</div>
+              <div className="text-2xl font-bold text-foreground">{courses.reduce((acc, c) => acc + (c.students_count || 0), 0).toLocaleString()}</div>
               <div className="text-sm text-muted-foreground">طالب</div>
             </div>
             <div className="glass rounded-xl p-4 border-border/50">
-              <Coins className="w-6 h-6 text-warning mb-2" />
+              <Award className="w-6 h-6 text-warning mb-2" />
               <div className="text-2xl font-bold text-foreground">+25</div>
               <div className="text-sm text-muted-foreground">نقاط للمشاركة</div>
             </div>
@@ -498,220 +451,159 @@ export default function Courses() {
             ))}
           </div>
 
-          {/* Courses Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => (
-              <div
-                key={course.id}
-                className={`glass rounded-2xl overflow-hidden border-border/50 hover:border-primary/30 hover-lift transition-all cursor-pointer group ${
-                  enrolledCourses.includes(course.id) ? "border-success/30" : ""
-                }`}
-              >
-                {/* Thumbnail */}
-                <div className="h-40 relative overflow-hidden">
-                  <img 
-                    src={course.thumbnail} 
-                    alt={course.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-                  {course.free && (
-                    <span className="absolute top-3 right-3 px-2 py-1 rounded-md bg-success text-success-foreground text-xs font-bold">
-                      مجاني
-                    </span>
-                  )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(course.id); }}
-                    className="absolute top-3 left-3 p-2 rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80 transition-colors"
-                  >
-                    {favoriteCourses.includes(course.id) ? (
-                      <Heart className="w-4 h-4 text-destructive fill-destructive" />
-                    ) : (
-                      <Heart className="w-4 h-4 text-foreground" />
-                    )}
-                  </button>
-                  {enrolledCourses.includes(course.id) && (
-                    <div className="absolute bottom-3 right-3 px-2 py-1 rounded-md bg-success/90 text-success-foreground text-xs font-bold flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      مسجل
-                    </div>
-                  )}
-                  <div 
-                    onClick={() => handleEnroll(course)}
-                    className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors flex items-center justify-center"
-                  >
-                    <PlayCircle className="w-14 h-14 text-foreground/0 group-hover:text-foreground/80 transition-all" />
-                  </div>
-                </div>
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              {/* Courses Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.map((course) => {
+                  const enrollment = getEnrollment(course.id);
+                  const isEnrolled = !!enrollment;
+                  const isFavorite = favoriteCourses.includes(course.id);
 
-                {/* Progress bar for enrolled courses */}
-                {enrolledCourses.includes(course.id) && (
-                  <div className="px-5 pt-3">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-muted-foreground">التقدم</span>
-                      <span className="text-primary font-medium">{courseProgress[course.id] || 0}%</span>
-                    </div>
-                    <Progress value={courseProgress[course.id] || 0} className="h-1.5" />
-                  </div>
-                )}
+                  return (
+                    <div
+                      key={course.id}
+                      className="glass rounded-2xl overflow-hidden border-border/50 hover:border-primary/30 hover-lift transition-all group"
+                    >
+                      {/* Thumbnail */}
+                      <div className="relative h-40 overflow-hidden">
+                        <img
+                          src={course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop"}
+                          alt={course.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+                        
+                        {/* Badges */}
+                        <div className="absolute top-3 right-3 flex gap-2">
+                          {course.is_free && (
+                            <span className="px-2 py-1 rounded-md bg-success text-success-foreground text-xs font-bold">
+                              مجاني
+                            </span>
+                          )}
+                          <span className="px-2 py-1 rounded-md bg-primary/90 text-primary-foreground text-xs font-medium">
+                            {course.level}
+                          </span>
+                        </div>
 
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
-                      {course.category}
-                    </span>
-                    <span className="px-2 py-1 rounded-md bg-secondary text-secondary-foreground text-xs">
-                      {course.level}
-                    </span>
-                    {course.type === "فيديو" ? (
-                      <Video className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <FileText className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </div>
+                        {/* Favorite Button */}
+                        <button
+                          onClick={() => toggleFavorite(course.id)}
+                          className="absolute top-3 left-3 p-2 rounded-full bg-background/80 hover:bg-background transition-colors"
+                        >
+                          {isFavorite ? (
+                            <Heart className="w-4 h-4 text-destructive fill-destructive" />
+                          ) : (
+                            <Heart className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </button>
 
-                  <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {course.title}
-                  </h3>
-
-                  {/* Instructor */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-full bg-gradient-accent flex items-center justify-center text-xs font-bold text-accent-foreground">
-                      {course.instructorAvatar}
-                    </div>
-                    <span className="text-sm text-muted-foreground">{course.instructor}</span>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-warning fill-warning" />
-                      <span className="font-medium text-foreground">{course.rating || "-"}</span>
-                      <span>({course.reviews})</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      <span>{course.students}</span>
-                    </div>
-                  </div>
-
-                  {/* Meta & Points */}
-                  <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{course.duration}</span>
+                        {/* Play Button */}
+                        {isEnrolled && (
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-glow">
+                              <Play className="w-6 h-6 text-primary-foreground ml-1" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <BookOpen className="w-4 h-4" />
-                        <span>{course.lessons} درس</span>
+
+                      {/* Content */}
+                      <div className="p-5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs">
+                            {course.category}
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 min-h-[3.5rem]">
+                          {course.title}
+                        </h3>
+
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {course.description}
+                        </p>
+
+                        {/* Instructor */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
+                            {course.instructor?.charAt(0) || 'م'}
+                          </div>
+                          <span className="text-sm text-muted-foreground">{course.instructor}</span>
+                        </div>
+
+                        {/* Progress (if enrolled) */}
+                        {isEnrolled && enrollment && (
+                          <div className="mb-4">
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="text-muted-foreground">التقدم</span>
+                              <span className="text-primary font-medium">{enrollment.progress}%</span>
+                            </div>
+                            <Progress value={enrollment.progress} className="h-2" />
+                          </div>
+                        )}
+
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            <span>{course.students_count || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{course.duration || 'غير محدد'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-warning fill-warning" />
+                            <span>{course.rating || 0}</span>
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <Button 
+                          variant={isEnrolled ? "secondary" : course.is_free ? "hero" : "outline"} 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleEnroll(course)}
+                        >
+                          {isEnrolled ? (
+                            <>
+                              <Play className="w-4 h-4" />
+                              استأنف الدورة
+                            </>
+                          ) : course.is_free ? (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              ابدأ مجاناً
+                            </>
+                          ) : (
+                            <>
+                              <Coins className="w-4 h-4" />
+                              ${course.price || 0}
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-accent font-bold">
-                      <Coins className="w-4 h-4" />
-                      <span>+{course.points}</span>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <Button 
-                    className="w-full mt-4" 
-                    variant={enrolledCourses.includes(course.id) ? "secondary" : "hero"}
-                    onClick={() => handleEnroll(course)}
-                  >
-                    {enrolledCourses.includes(course.id) ? (
-                      <>
-                        <Play className="w-4 h-4" />
-                        استئناف الدورة
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4" />
-                        سجل الآن
-                      </>
-                    )}
-                  </Button>
-                </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
 
-          {filteredCourses.length === 0 && (
-            <div className="text-center py-12">
-              <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-bold text-foreground mb-2">لا توجد دورات</h3>
-              <p className="text-muted-foreground mb-4">لم نجد أي دورات تطابق بحثك</p>
-              <Button variant="hero" onClick={() => setIsShareDialogOpen(true)}>
-                <Plus className="w-4 h-4" />
-                شارك أول دورة
-              </Button>
-            </div>
-          )}
-
-          {/* Load More */}
-          {filteredCourses.length > 0 && (
-            <div className="text-center mt-8">
-              <Button variant="outline" size="lg">
-                عرض المزيد من الدورات
-              </Button>
-            </div>
+              {filteredCourses.length === 0 && (
+                <div className="text-center py-20 text-muted-foreground">
+                  <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">لا توجد دورات مطابقة للبحث</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
-
-      {/* Course Viewer Dialog */}
-      <Dialog open={!!selectedCourse} onOpenChange={() => setSelectedCourse(null)}>
-        <DialogContent className="sm:max-w-[700px]">
-          <DialogHeader>
-            <DialogTitle className="text-xl">{selectedCourse?.title}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="aspect-video rounded-xl overflow-hidden bg-secondary">
-              <img 
-                src={selectedCourse?.thumbnail} 
-                alt={selectedCourse?.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>المدرب: {selectedCourse?.instructor}</span>
-                <span>•</span>
-                <span>{selectedCourse?.lessons} درس</span>
-                <span>•</span>
-                <span>{selectedCourse?.duration}</span>
-              </div>
-              <div className="flex items-center gap-1 text-accent font-bold">
-                <Coins className="w-4 h-4" />
-                <span>+{selectedCourse?.points} نقاط عند الإكمال</span>
-              </div>
-            </div>
-
-            {selectedCourse && enrolledCourses.includes(selectedCourse.id) && (
-              <div>
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">التقدم في الدورة</span>
-                  <span className="text-primary font-medium">{courseProgress[selectedCourse.id] || 0}%</span>
-                </div>
-                <Progress value={courseProgress[selectedCourse.id] || 0} className="h-2" />
-              </div>
-            )}
-
-            <p className="text-muted-foreground">{selectedCourse?.description}</p>
-            
-            <Button 
-              className="w-full" 
-              variant="hero" 
-              onClick={() => selectedCourse && handleWatchLesson(selectedCourse.id)}
-            >
-              <Play className="w-4 h-4" />
-              مشاهدة الدرس التالي
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Footer />
     </div>
