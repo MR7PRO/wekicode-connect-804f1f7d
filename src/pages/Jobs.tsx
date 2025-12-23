@@ -292,11 +292,16 @@ export default function Jobs() {
     return "غير محدد";
   };
 
-  // Generate realistic professional avatar URL - looks like real people
-  const getJobAvatar = (job: Job, index?: number) => {
-    // Use pravatar.cc for realistic human photos
-    const hash = Math.abs(job.title.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0));
-    return `https://i.pravatar.cc/150?u=${encodeURIComponent(job.company || job.title)}${hash}`;
+  // Generate diverse realistic avatars for companies/people
+  const getJobAvatar = (job: Job) => {
+    const seed = job.company || job.title;
+    const hash = Math.abs(seed.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0));
+    
+    // Mix between business-looking men and women portraits
+    const gender = hash % 2 === 0 ? 'men' : 'women';
+    const index = hash % 99;
+    
+    return `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
   };
 
   return (
