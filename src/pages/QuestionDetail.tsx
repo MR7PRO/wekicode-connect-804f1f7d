@@ -192,10 +192,8 @@ export default function QuestionDetail() {
   };
 
   const incrementViews = async () => {
-    await supabase
-      .from('questions')
-      .update({ views: (question?.views || 0) + 1 })
-      .eq('id', id);
+    // Use atomic RPC function to prevent race conditions
+    await supabase.rpc('increment_question_views', { question_uuid: id });
   };
 
   const handleVote = async (targetId: string, type: 'question' | 'answer', voteType: 1 | -1) => {
@@ -299,25 +297,11 @@ export default function QuestionDetail() {
       return;
     }
 
-    // Update answers count
-    await supabase
-      .from('questions')
-      .update({ answers_count: (question?.answers_count || 0) + 1 })
-      .eq('id', id);
-
-    // Get current user points and add 10
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('points')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    // Use atomic RPC functions to prevent race conditions
+    await supabase.rpc('increment_question_answers', { question_uuid: id });
     
-    if (profileData) {
-      await supabase
-        .from('profiles')
-        .update({ points: (profileData.points || 0) + 10 })
-        .eq('user_id', user.id);
-    }
+    // Use secure RPC function to increment points (prevents cheating and race conditions)
+    await supabase.rpc('increment_user_points', { points_to_add: 10 });
 
     toast({
       title: "تم إضافة إجابتك! 🎉",
