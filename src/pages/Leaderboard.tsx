@@ -26,6 +26,25 @@ interface LeaderboardUser {
   badges: string[] | null;
 }
 
+// Sample demo users to show activity
+const demoUsers: LeaderboardUser[] = [
+  { id: 'demo-1', user_id: 'demo-1', full_name: 'محمد أبو صالح', avatar_url: null, points: 4850, level: 12, badges: ['gold_contributor', 'mentor', 'early_adopter'] },
+  { id: 'demo-2', user_id: 'demo-2', full_name: 'سارة الخطيب', avatar_url: null, points: 4320, level: 11, badges: ['silver_contributor', 'helper'] },
+  { id: 'demo-3', user_id: 'demo-3', full_name: 'أحمد الشريف', avatar_url: null, points: 3980, level: 10, badges: ['bronze_contributor', 'problem_solver'] },
+  { id: 'demo-4', user_id: 'demo-4', full_name: 'فاطمة حسن', avatar_url: null, points: 3650, level: 9, badges: ['helper', 'active_member'] },
+  { id: 'demo-5', user_id: 'demo-5', full_name: 'عمر النجار', avatar_url: null, points: 3200, level: 8, badges: ['contributor'] },
+  { id: 'demo-6', user_id: 'demo-6', full_name: 'نور الدين', avatar_url: null, points: 2890, level: 7, badges: ['active_member'] },
+  { id: 'demo-7', user_id: 'demo-7', full_name: 'ليلى العمري', avatar_url: null, points: 2540, level: 7, badges: ['helper'] },
+  { id: 'demo-8', user_id: 'demo-8', full_name: 'خالد المصري', avatar_url: null, points: 2310, level: 6, badges: ['contributor'] },
+  { id: 'demo-9', user_id: 'demo-9', full_name: 'هند الزهراني', avatar_url: null, points: 2050, level: 5, badges: ['newcomer'] },
+  { id: 'demo-10', user_id: 'demo-10', full_name: 'يوسف القاسم', avatar_url: null, points: 1890, level: 5, badges: ['active_member'] },
+  { id: 'demo-11', user_id: 'demo-11', full_name: 'رنا الحمد', avatar_url: null, points: 1720, level: 4, badges: [] },
+  { id: 'demo-12', user_id: 'demo-12', full_name: 'باسم عودة', avatar_url: null, points: 1580, level: 4, badges: [] },
+  { id: 'demo-13', user_id: 'demo-13', full_name: 'دينا الفقي', avatar_url: null, points: 1430, level: 3, badges: [] },
+  { id: 'demo-14', user_id: 'demo-14', full_name: 'طارق السيد', avatar_url: null, points: 1290, level: 3, badges: [] },
+  { id: 'demo-15', user_id: 'demo-15', full_name: 'مريم الشامي', avatar_url: null, points: 1150, level: 3, badges: [] },
+];
+
 export default function Leaderboard() {
   const { user, profile } = useAuth();
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
@@ -57,11 +76,22 @@ export default function Leaderboard() {
       level: u.level ?? 1
     }));
 
-    setUsers(validUsers);
+    // Merge real users with demo users, avoiding duplicates and sorting by points
+    const allUsers = [...validUsers];
+    demoUsers.forEach(demo => {
+      if (!allUsers.some(u => u.full_name === demo.full_name)) {
+        allUsers.push(demo);
+      }
+    });
+    
+    // Sort by points descending
+    allUsers.sort((a, b) => b.points - a.points);
+
+    setUsers(allUsers);
 
     // Find current user's rank
     if (user) {
-      const rank = validUsers.findIndex(u => u.user_id === user.id);
+      const rank = allUsers.findIndex(u => u.user_id === user.id);
       setUserRank(rank !== -1 ? rank + 1 : null);
     }
 

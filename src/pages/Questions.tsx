@@ -43,11 +43,121 @@ interface Question {
   is_solved: boolean;
   user_id: string;
   created_at: string;
+  accepted_answer_id?: string | null;
+  updated_at?: string;
   author?: {
     full_name: string;
     avatar_url: string | null;
   };
 }
+
+// Sample demo questions to show community activity
+const demoQuestions: Question[] = [
+  {
+    id: 'demo-q1',
+    title: 'كيف أتعامل مع الـ async/await في JavaScript؟',
+    content: 'أواجه مشكلة في فهم كيفية استخدام async/await مع الـ promises. هل يمكن لأحد شرح الفرق بينهما ومتى أستخدم كل واحدة؟',
+    tags: ['JavaScript', 'async', 'promises'],
+    votes: 45,
+    answers_count: 8,
+    views: 234,
+    is_solved: true,
+    user_id: 'demo-user-1',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'محمد العلي', avatar_url: null }
+  },
+  {
+    id: 'demo-q2',
+    title: 'ما هي أفضل طريقة لتنظيم مشروع React كبير؟',
+    content: 'أعمل على مشروع React كبير وأحتاج نصائح حول بنية المجلدات وتنظيم الـ components والـ hooks.',
+    tags: ['React', 'architecture', 'best-practices'],
+    votes: 38,
+    answers_count: 12,
+    views: 456,
+    is_solved: true,
+    user_id: 'demo-user-2',
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'سارة أحمد', avatar_url: null }
+  },
+  {
+    id: 'demo-q3',
+    title: 'مشكلة في اتصال قاعدة البيانات PostgreSQL',
+    content: 'أحاول الاتصال بقاعدة بيانات PostgreSQL من Node.js لكن أحصل على خطأ connection timeout. ما الحل؟',
+    tags: ['Node.js', 'قواعد البيانات', 'PostgreSQL'],
+    votes: 22,
+    answers_count: 5,
+    views: 178,
+    is_solved: false,
+    user_id: 'demo-user-3',
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'أحمد الخطيب', avatar_url: null }
+  },
+  {
+    id: 'demo-q4',
+    title: 'كيف أضيف TypeScript لمشروع React موجود؟',
+    content: 'لدي مشروع React قديم بـ JavaScript وأريد تحويله تدريجياً إلى TypeScript. ما الخطوات؟',
+    tags: ['TypeScript', 'React', 'migration'],
+    votes: 31,
+    answers_count: 7,
+    views: 289,
+    is_solved: true,
+    user_id: 'demo-user-4',
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'نور الهدى', avatar_url: null }
+  },
+  {
+    id: 'demo-q5',
+    title: 'شرح الفرق بين CSS Grid و Flexbox',
+    content: 'متى أستخدم Grid ومتى أستخدم Flexbox؟ أحياناً أشعر بالحيرة في الاختيار بينهما.',
+    tags: ['CSS', 'Flexbox', 'Grid'],
+    votes: 56,
+    answers_count: 15,
+    views: 612,
+    is_solved: true,
+    user_id: 'demo-user-5',
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'ليلى حسين', avatar_url: null }
+  },
+  {
+    id: 'demo-q6',
+    title: 'كيف أحمي API من هجمات الـ CORS؟',
+    content: 'أريد فهم كيفية إعداد CORS بشكل صحيح في Express.js لحماية الـ API الخاص بي.',
+    tags: ['Node.js', 'security', 'CORS'],
+    votes: 28,
+    answers_count: 6,
+    views: 198,
+    is_solved: false,
+    user_id: 'demo-user-6',
+    created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'عمر فاروق', avatar_url: null }
+  },
+  {
+    id: 'demo-q7',
+    title: 'ما هي أفضل مكتبة لإدارة الـ State في React 2024؟',
+    content: 'Redux vs Zustand vs Jotai vs Context API - أيهم أفضل للمشاريع المتوسطة والكبيرة؟',
+    tags: ['React', 'state-management', 'Redux'],
+    votes: 67,
+    answers_count: 21,
+    views: 834,
+    is_solved: true,
+    user_id: 'demo-user-7',
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'فاطمة الزهراء', avatar_url: null }
+  },
+  {
+    id: 'demo-q8',
+    title: 'مشكلة في Docker مع Node.js',
+    content: 'الـ container يعمل لكن التطبيق لا يستجيب على المنفذ المحدد. ما المشكلة؟',
+    tags: ['DevOps', 'Docker', 'Node.js'],
+    votes: 19,
+    answers_count: 4,
+    views: 145,
+    is_solved: false,
+    user_id: 'demo-user-8',
+    created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+    author: { full_name: 'خالد المنصور', avatar_url: null }
+  },
+];
 
 export default function Questions() {
   const navigate = useNavigate();
@@ -102,15 +212,26 @@ export default function Questions() {
       })
     );
 
-    setQuestions(questionsWithAuthors);
+    // Merge real questions with demo questions
+    const allQuestions: Question[] = [...questionsWithAuthors];
+    demoQuestions.forEach(demo => {
+      if (!allQuestions.some(q => q.title === demo.title)) {
+        allQuestions.push(demo as Question);
+      }
+    });
     
-    // Calculate stats
-    const totalAnswers = data.reduce((acc, q) => acc + (q.answers_count || 0), 0);
-    const solvedCount = data.filter(q => q.is_solved).length;
+    // Sort by created_at descending
+    allQuestions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    setQuestions(allQuestions);
+    
+    // Calculate stats including demo questions
+    const totalAnswers = allQuestions.reduce((acc, q) => acc + (q.answers_count || 0), 0);
+    const solvedCount = allQuestions.filter(q => q.is_solved).length;
     setStats({
-      total: data.length,
+      total: allQuestions.length,
       answers: totalAnswers,
-      solved: data.length > 0 ? Math.round((solvedCount / data.length) * 100) : 0
+      solved: allQuestions.length > 0 ? Math.round((solvedCount / allQuestions.length) * 100) : 0
     });
     
     setLoading(false);

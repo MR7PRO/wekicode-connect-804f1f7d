@@ -292,24 +292,12 @@ export default function Jobs() {
     return "غير محدد";
   };
 
-  // Generate avatar URL based on job title/company
+  // Generate professional avatar URL based on job title/company
   const getJobAvatar = (job: Job) => {
     const seed = job.company || job.title;
-    const jobKeywords = job.title.toLowerCase();
     
-    // Determine style based on job type
-    let style = 'adventurer';
-    if (jobKeywords.includes('design') || jobKeywords.includes('تصميم') || jobKeywords.includes('ui') || jobKeywords.includes('ux')) {
-      style = 'avataaars';
-    } else if (jobKeywords.includes('backend') || jobKeywords.includes('server') || jobKeywords.includes('api')) {
-      style = 'bottts';
-    } else if (jobKeywords.includes('mobile') || jobKeywords.includes('موبايل') || jobKeywords.includes('ios') || jobKeywords.includes('android')) {
-      style = 'fun-emoji';
-    } else if (jobKeywords.includes('data') || jobKeywords.includes('بيانات') || jobKeywords.includes('ai') || jobKeywords.includes('ذكاء')) {
-      style = 'pixel-art';
-    }
-    
-    return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+    // Use initials style for a more professional corporate look
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=0ea5e9,8b5cf6,ec4899,f59e0b,10b981&fontFamily=Arial&fontSize=40&fontWeight=600`;
   };
 
   return (
