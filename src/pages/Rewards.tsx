@@ -143,10 +143,22 @@ export default function Rewards() {
       return;
     }
 
-    if (userPoints < reward.points_cost) {
+    // Refresh profile first to get latest points
+    await refreshProfile();
+    
+    // Get fresh points from database
+    const { data: freshProfile } = await supabase
+      .from('profiles')
+      .select('points')
+      .eq('user_id', user.id)
+      .single();
+    
+    const currentPoints = freshProfile?.points ?? 0;
+
+    if (currentPoints < reward.points_cost) {
       toast({
         title: "نقاط غير كافية",
-        description: `تحتاج ${reward.points_cost - userPoints} نقطة إضافية`,
+        description: `لديك ${currentPoints} نقطة وتحتاج ${reward.points_cost} نقطة. تحتاج ${reward.points_cost - currentPoints} نقطة إضافية`,
         variant: "destructive"
       });
       return;
@@ -178,11 +190,20 @@ export default function Rewards() {
       });
 
     if (error) {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء الاستبدال",
-        variant: "destructive"
-      });
+      // Check if it's an insufficient points error from the trigger
+      if (error.message?.includes('Insufficient points')) {
+        toast({
+          title: "نقاط غير كافية",
+          description: "ليس لديك نقاط كافية لهذه المكافأة",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ أثناء الاستبدال",
+          variant: "destructive"
+        });
+      }
       setIsRedeeming(false);
       return;
     }
