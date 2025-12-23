@@ -57,7 +57,7 @@ interface Enrollment {
 }
 
 export default function Courses() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
@@ -261,13 +261,16 @@ export default function Courses() {
 
     toast({
       title: "تم نشر المحتوى! 🎉",
-      description: "ستحصل على نقاط عند أول طالب مسجل",
+      description: "حصلت على +25 نقطة للمشاركة",
     });
 
     setNewCourse({ title: "", description: "", category: "تطوير الويب", level: "مبتدئ", duration: "", type: "فيديو", link: "" });
     setIsShareDialogOpen(false);
     setSubmitting(false);
     fetchCourses();
+    
+    // Refresh profile to get updated points
+    await refreshProfile();
   };
 
   const getEnrollment = (courseId: string) => {

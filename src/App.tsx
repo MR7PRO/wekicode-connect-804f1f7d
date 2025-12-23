@@ -14,6 +14,7 @@ import Courses from "./pages/Courses";
 import Rewards from "./pages/Rewards";
 import Profile from "./pages/Profile";
 import Billing from "./pages/Billing";
+import Leaderboard from "./pages/Leaderboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/questions/:id" element={<QuestionDetail />} />
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/courses" element={<Courses />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
               {/* Protected Routes - require authentication */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/rewards" element={<Rewards />} />
