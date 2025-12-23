@@ -292,12 +292,11 @@ export default function Jobs() {
     return "غير محدد";
   };
 
-  // Generate professional avatar URL based on job title/company
+  // Generate professional avatar URL based on job title/company using realistic avatars
   const getJobAvatar = (job: Job) => {
     const seed = job.company || job.title;
-    
-    // Use initials style for a more professional corporate look
-    return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=0ea5e9,8b5cf6,ec4899,f59e0b,10b981&fontFamily=Arial&fontSize=40&fontWeight=600`;
+    // Use notionists-neutral for professional realistic looking avatars
+    return `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=f0f0f0`;
   };
 
   return (
