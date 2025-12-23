@@ -34,6 +34,7 @@ const navLinks = [
   { path: "/courses", label: "التعليم", icon: BookOpen },
   { path: "/leaderboard", label: "المتصدرين", icon: Trophy },
   { path: "/rewards", label: "المكافآت", icon: Gift },
+  { path: "/billing", label: "الفواتير", icon: CreditCard },
 ];
 
 export function Navbar() {
