@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/components/notifications/NotificationSystem";
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
+import QuestionDetail from "./pages/QuestionDetail";
 import Jobs from "./pages/Jobs";
 import Courses from "./pages/Courses";
 import Rewards from "./pages/Rewards";
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/questions" element={<Questions />} />
+              <Route path="/questions/:id" element={<QuestionDetail />} />
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/rewards" element={<Rewards />} />
