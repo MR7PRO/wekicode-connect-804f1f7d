@@ -70,7 +70,7 @@ interface Comment {
 export default function QuestionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   
   const [question, setQuestion] = useState<Question | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -309,6 +309,9 @@ export default function QuestionDetail() {
     setSubmitting(false);
     fetchAnswers();
     fetchQuestion();
+    
+    // Refresh profile to get updated points
+    await refreshProfile();
   };
 
   const handleAcceptAnswer = async (answerId: string) => {
