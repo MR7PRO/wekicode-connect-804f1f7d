@@ -103,11 +103,20 @@ export default function Leaderboard() {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   };
 
-  // Generate realistic avatar URL - looks like real forum/social media users
-  const getDemoAvatar = (name: string | null, index?: number) => {
-    // Use pravatar.cc for realistic human photos
-    const seed = name || `user-${index || Math.random()}`;
-    return `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
+  // Generate diverse realistic avatars - different for each person
+  const getDemoAvatar = (name: string | null, userId: string) => {
+    // Create a hash from the name/userId to get consistent but varied results
+    const seed = name || userId;
+    const hash = Math.abs(seed.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0));
+    
+    // Determine gender-like index based on common Arabic name patterns
+    const femaleNames = ['سارة', 'فاطمة', 'نور', 'ليلى', 'هند', 'رنا', 'دينا', 'مريم'];
+    const isFemale = name && femaleNames.some(fn => name.includes(fn));
+    
+    const gender = isFemale ? 'women' : 'men';
+    const index = hash % 99;
+    
+    return `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
   };
 
   const getRankIcon = (rank: number) => {
@@ -200,7 +209,7 @@ export default function Leaderboard() {
                   {/* Second Place */}
                   <div className="flex flex-col items-center">
                     <Avatar className="w-16 h-16 border-4 border-gray-400 mb-2">
-                      <AvatarImage src={topThree[1].avatar_url || getDemoAvatar(topThree[1].full_name)} />
+                      <AvatarImage src={topThree[1].avatar_url || getDemoAvatar(topThree[1].full_name, topThree[1].user_id)} />
                       <AvatarFallback className="bg-gray-400 text-white text-xl">
                         {getInitials(topThree[1].full_name)}
                       </AvatarFallback>
@@ -217,7 +226,7 @@ export default function Leaderboard() {
                   <div className="flex flex-col items-center -mt-8">
                     <Crown className="w-10 h-10 text-yellow-500 mb-2 animate-pulse" />
                     <Avatar className="w-20 h-20 border-4 border-yellow-500 mb-2">
-                      <AvatarImage src={topThree[0].avatar_url || getDemoAvatar(topThree[0].full_name)} />
+                      <AvatarImage src={topThree[0].avatar_url || getDemoAvatar(topThree[0].full_name, topThree[0].user_id)} />
                       <AvatarFallback className="bg-yellow-500 text-white text-2xl">
                         {getInitials(topThree[0].full_name)}
                       </AvatarFallback>
@@ -232,7 +241,7 @@ export default function Leaderboard() {
                   {/* Third Place */}
                   <div className="flex flex-col items-center">
                     <Avatar className="w-14 h-14 border-4 border-amber-600 mb-2">
-                      <AvatarImage src={topThree[2].avatar_url || getDemoAvatar(topThree[2].full_name)} />
+                      <AvatarImage src={topThree[2].avatar_url || getDemoAvatar(topThree[2].full_name, topThree[2].user_id)} />
                       <AvatarFallback className="bg-amber-600 text-white text-lg">
                         {getInitials(topThree[2].full_name)}
                       </AvatarFallback>
@@ -306,7 +315,7 @@ export default function Leaderboard() {
 
                         {/* Avatar */}
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={u.avatar_url || getDemoAvatar(u.full_name)} />
+                          <AvatarImage src={u.avatar_url || getDemoAvatar(u.full_name, u.user_id)} />
                           <AvatarFallback className={rank <= 3 ? "bg-primary text-primary-foreground" : "bg-secondary"}>
                             {getInitials(u.full_name)}
                           </AvatarFallback>

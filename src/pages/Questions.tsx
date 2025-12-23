@@ -64,7 +64,7 @@ const demoQuestions: Question[] = [
     is_solved: true,
     user_id: 'demo-user-1',
     created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'محمد العلي', avatar_url: null }
+    author: { full_name: 'محمد العلي', avatar_url: 'https://randomuser.me/api/portraits/men/32.jpg' }
   },
   {
     id: 'demo-q2',
@@ -77,7 +77,7 @@ const demoQuestions: Question[] = [
     is_solved: true,
     user_id: 'demo-user-2',
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'سارة أحمد', avatar_url: null }
+    author: { full_name: 'سارة أحمد', avatar_url: 'https://randomuser.me/api/portraits/women/44.jpg' }
   },
   {
     id: 'demo-q3',
@@ -90,7 +90,7 @@ const demoQuestions: Question[] = [
     is_solved: false,
     user_id: 'demo-user-3',
     created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'أحمد الخطيب', avatar_url: null }
+    author: { full_name: 'أحمد الخطيب', avatar_url: 'https://randomuser.me/api/portraits/men/67.jpg' }
   },
   {
     id: 'demo-q4',
@@ -103,7 +103,7 @@ const demoQuestions: Question[] = [
     is_solved: true,
     user_id: 'demo-user-4',
     created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'نور الهدى', avatar_url: null }
+    author: { full_name: 'نور الهدى', avatar_url: 'https://randomuser.me/api/portraits/women/22.jpg' }
   },
   {
     id: 'demo-q5',
@@ -116,7 +116,7 @@ const demoQuestions: Question[] = [
     is_solved: true,
     user_id: 'demo-user-5',
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'ليلى حسين', avatar_url: null }
+    author: { full_name: 'ليلى حسين', avatar_url: 'https://randomuser.me/api/portraits/women/89.jpg' }
   },
   {
     id: 'demo-q6',
@@ -129,7 +129,7 @@ const demoQuestions: Question[] = [
     is_solved: false,
     user_id: 'demo-user-6',
     created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'عمر فاروق', avatar_url: null }
+    author: { full_name: 'عمر فاروق', avatar_url: 'https://randomuser.me/api/portraits/men/45.jpg' }
   },
   {
     id: 'demo-q7',
@@ -142,7 +142,7 @@ const demoQuestions: Question[] = [
     is_solved: true,
     user_id: 'demo-user-7',
     created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'فاطمة الزهراء', avatar_url: null }
+    author: { full_name: 'فاطمة الزهراء', avatar_url: 'https://randomuser.me/api/portraits/women/56.jpg' }
   },
   {
     id: 'demo-q8',
@@ -155,7 +155,7 @@ const demoQuestions: Question[] = [
     is_solved: false,
     user_id: 'demo-user-8',
     created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    author: { full_name: 'خالد المنصور', avatar_url: null }
+    author: { full_name: 'خالد المنصور', avatar_url: 'https://randomuser.me/api/portraits/men/78.jpg' }
   },
 ];
 
@@ -570,9 +570,17 @@ export default function Questions() {
                         <div className="flex flex-wrap items-center justify-between gap-4">
                           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-                                {question.author?.full_name?.charAt(0) || 'م'}
-                              </div>
+                              {question.author?.avatar_url ? (
+                                <img 
+                                  src={question.author.avatar_url} 
+                                  alt={question.author.full_name || 'مستخدم'}
+                                  className="w-6 h-6 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
+                                  {question.author?.full_name?.charAt(0) || 'م'}
+                                </div>
+                              )}
                               <span>{question.author?.full_name || 'مستخدم'}</span>
                             </div>
                             <div className="flex items-center gap-1">
