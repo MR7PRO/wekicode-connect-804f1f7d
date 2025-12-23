@@ -1,0 +1,318 @@
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { 
+  Trophy, 
+  Medal, 
+  Crown, 
+  Star, 
+  TrendingUp,
+  Users,
+  Coins,
+  Award,
+  Loader2
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface LeaderboardUser {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  points: number;
+  level: number;
+  badges: string[] | null;
+}
+
+export default function Leaderboard() {
+  const { user, profile } = useAuth();
+  const [users, setUsers] = useState<LeaderboardUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userRank, setUserRank] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [user]);
+
+  const fetchLeaderboard = async () => {
+    setLoading(true);
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, user_id, full_name, avatar_url, points, level, badges')
+      .order('points', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error('Error fetching leaderboard:', error);
+      setLoading(false);
+      return;
+    }
+
+    const validUsers = (data || []).map(u => ({
+      ...u,
+      points: u.points ?? 0,
+      level: u.level ?? 1
+    }));
+
+    setUsers(validUsers);
+
+    // Find current user's rank
+    if (user) {
+      const rank = validUsers.findIndex(u => u.user_id === user.id);
+      setUserRank(rank !== -1 ? rank + 1 : null);
+    }
+
+    setLoading(false);
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return "U";
+    return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  };
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return <Crown className="w-6 h-6 text-yellow-500" />;
+      case 2:
+        return <Medal className="w-6 h-6 text-gray-400" />;
+      case 3:
+        return <Medal className="w-6 h-6 text-amber-600" />;
+      default:
+        return <span className="w-6 h-6 flex items-center justify-center text-muted-foreground font-bold">{rank}</span>;
+    }
+  };
+
+  const getRankBgClass = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return "bg-gradient-to-r from-yellow-500/20 to-amber-500/10 border-yellow-500/30";
+      case 2:
+        return "bg-gradient-to-r from-gray-400/20 to-gray-300/10 border-gray-400/30";
+      case 3:
+        return "bg-gradient-to-r from-amber-600/20 to-orange-500/10 border-amber-600/30";
+      default:
+        return "bg-secondary/50 border-border/50";
+    }
+  };
+
+  const topThree = users.slice(0, 3);
+  const restOfUsers = users.slice(3);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              <span className="text-foreground">لوحة</span>
+              {" "}
+              <span className="text-gradient-accent">المتصدرين</span>
+            </h1>
+            <p className="text-muted-foreground">
+              أفضل المستخدمين حسب النقاط والمستوى
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="glass rounded-xl p-4 border-border/50">
+              <Users className="w-6 h-6 text-primary mb-2" />
+              <div className="text-2xl font-bold text-foreground">{users.length}</div>
+              <div className="text-sm text-muted-foreground">مستخدم نشط</div>
+            </div>
+            <div className="glass rounded-xl p-4 border-border/50">
+              <Coins className="w-6 h-6 text-accent mb-2" />
+              <div className="text-2xl font-bold text-foreground">
+                {users.reduce((acc, u) => acc + u.points, 0).toLocaleString()}
+              </div>
+              <div className="text-sm text-muted-foreground">إجمالي النقاط</div>
+            </div>
+            <div className="glass rounded-xl p-4 border-border/50">
+              <TrendingUp className="w-6 h-6 text-success mb-2" />
+              <div className="text-2xl font-bold text-foreground">
+                {users.length > 0 ? Math.round(users.reduce((acc, u) => acc + u.level, 0) / users.length) : 0}
+              </div>
+              <div className="text-sm text-muted-foreground">متوسط المستوى</div>
+            </div>
+            <div className="glass rounded-xl p-4 border-border/50">
+              <Award className="w-6 h-6 text-warning mb-2" />
+              <div className="text-2xl font-bold text-foreground">
+                {userRank ? `#${userRank}` : "-"}
+              </div>
+              <div className="text-sm text-muted-foreground">ترتيبك</div>
+            </div>
+          </div>
+
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              {/* Top 3 Podium */}
+              {topThree.length >= 3 && (
+                <div className="flex items-end justify-center gap-4 mb-12">
+                  {/* Second Place */}
+                  <div className="flex flex-col items-center">
+                    <Avatar className="w-16 h-16 border-4 border-gray-400 mb-2">
+                      <AvatarImage src={topThree[1].avatar_url ?? undefined} />
+                      <AvatarFallback className="bg-gray-400 text-white text-xl">
+                        {getInitials(topThree[1].full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Medal className="w-8 h-8 text-gray-400 mb-1" />
+                    <div className="glass rounded-xl p-4 text-center w-28 h-24 flex flex-col justify-center border-gray-400/30">
+                      <div className="font-bold text-foreground text-sm truncate">{topThree[1].full_name || "مستخدم"}</div>
+                      <div className="text-accent font-bold">{topThree[1].points.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">المستوى {topThree[1].level}</div>
+                    </div>
+                  </div>
+
+                  {/* First Place */}
+                  <div className="flex flex-col items-center -mt-8">
+                    <Crown className="w-10 h-10 text-yellow-500 mb-2 animate-pulse" />
+                    <Avatar className="w-20 h-20 border-4 border-yellow-500 mb-2">
+                      <AvatarImage src={topThree[0].avatar_url ?? undefined} />
+                      <AvatarFallback className="bg-yellow-500 text-white text-2xl">
+                        {getInitials(topThree[0].full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="glass rounded-xl p-4 text-center w-32 h-28 flex flex-col justify-center border-yellow-500/30 bg-gradient-to-b from-yellow-500/10 to-transparent">
+                      <div className="font-bold text-foreground truncate">{topThree[0].full_name || "مستخدم"}</div>
+                      <div className="text-accent text-xl font-bold">{topThree[0].points.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">المستوى {topThree[0].level}</div>
+                    </div>
+                  </div>
+
+                  {/* Third Place */}
+                  <div className="flex flex-col items-center">
+                    <Avatar className="w-14 h-14 border-4 border-amber-600 mb-2">
+                      <AvatarImage src={topThree[2].avatar_url ?? undefined} />
+                      <AvatarFallback className="bg-amber-600 text-white text-lg">
+                        {getInitials(topThree[2].full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Medal className="w-7 h-7 text-amber-600 mb-1" />
+                    <div className="glass rounded-xl p-4 text-center w-24 h-20 flex flex-col justify-center border-amber-600/30">
+                      <div className="font-bold text-foreground text-xs truncate">{topThree[2].full_name || "مستخدم"}</div>
+                      <div className="text-accent font-bold text-sm">{topThree[2].points.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">المستوى {topThree[2].level}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current User Card (if not in top 10) */}
+              {user && userRank && userRank > 10 && profile && (
+                <div className="glass rounded-2xl p-4 border-primary/30 bg-primary/5 mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-primary font-bold">#{userRank}</span>
+                    </div>
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={profile.avatar_url ?? undefined} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getInitials(profile.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="font-bold text-foreground">{profile.full_name || "أنت"}</div>
+                      <div className="text-sm text-muted-foreground">ترتيبك الحالي</div>
+                    </div>
+                    <div className="text-left">
+                      <div className="flex items-center gap-2">
+                        <Coins className="w-4 h-4 text-accent" />
+                        <span className="text-lg font-bold text-accent">{(profile.points ?? 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Star className="w-3 h-3" />
+                        المستوى {profile.level ?? 1}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Leaderboard Table */}
+              <div className="glass rounded-2xl border-border/50 overflow-hidden">
+                <div className="p-4 border-b border-border/50">
+                  <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                    <Trophy className="w-6 h-6 text-accent" />
+                    قائمة المتصدرين
+                  </h2>
+                </div>
+                
+                <div className="divide-y divide-border/50">
+                  {users.map((u, index) => {
+                    const rank = index + 1;
+                    const isCurrentUser = user && u.user_id === user.id;
+                    
+                    return (
+                      <div 
+                        key={u.id} 
+                        className={`flex items-center gap-4 p-4 hover:bg-secondary/30 transition-colors ${
+                          isCurrentUser ? "bg-primary/5 border-r-4 border-r-primary" : ""
+                        } ${getRankBgClass(rank)}`}
+                      >
+                        {/* Rank */}
+                        <div className="w-10 flex items-center justify-center">
+                          {getRankIcon(rank)}
+                        </div>
+
+                        {/* Avatar */}
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={u.avatar_url ?? undefined} />
+                          <AvatarFallback className={rank <= 3 ? "bg-primary text-primary-foreground" : "bg-secondary"}>
+                            {getInitials(u.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        {/* Name & Level */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-foreground truncate">
+                            {u.full_name || "مستخدم"}
+                            {isCurrentUser && <span className="text-primary mr-2">(أنت)</span>}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Star className="w-3 h-3" />
+                            المستوى {u.level}
+                            {u.badges && u.badges.length > 0 && (
+                              <span className="text-xs">• {u.badges.length} شارة</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Points */}
+                        <div className="flex items-center gap-2">
+                          <Coins className="w-5 h-5 text-accent" />
+                          <span className="text-lg font-bold text-gradient-accent">{u.points.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {users.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>لا يوجد مستخدمين بعد</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}

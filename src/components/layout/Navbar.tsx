@@ -11,7 +11,8 @@ import {
   X,
   LogOut,
   Loader2,
-  CreditCard
+  CreditCard,
+  Trophy
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,8 +32,8 @@ const navLinks = [
   { path: "/questions", label: "الأسئلة", icon: HelpCircle },
   { path: "/jobs", label: "الوظائف", icon: Briefcase },
   { path: "/courses", label: "التعليم", icon: BookOpen },
+  { path: "/leaderboard", label: "المتصدرين", icon: Trophy },
   { path: "/rewards", label: "المكافآت", icon: Gift },
-  { path: "/billing", label: "الفواتير", icon: CreditCard },
 ];
 
 export function Navbar() {
