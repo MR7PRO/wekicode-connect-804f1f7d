@@ -103,10 +103,11 @@ export default function Leaderboard() {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   };
 
-  // Generate realistic avatar URL for demo users
-  const getDemoAvatar = (name: string | null) => {
-    const seed = name || 'user';
-    return `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=f0f0f0`;
+  // Generate realistic avatar URL - looks like real forum/social media users
+  const getDemoAvatar = (name: string | null, index?: number) => {
+    // Use pravatar.cc for realistic human photos
+    const seed = name || `user-${index || Math.random()}`;
+    return `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
   };
 
   const getRankIcon = (rank: number) => {
