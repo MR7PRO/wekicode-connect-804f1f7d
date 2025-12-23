@@ -292,6 +292,26 @@ export default function Jobs() {
     return "غير محدد";
   };
 
+  // Generate avatar URL based on job title/company
+  const getJobAvatar = (job: Job) => {
+    const seed = job.company || job.title;
+    const jobKeywords = job.title.toLowerCase();
+    
+    // Determine style based on job type
+    let style = 'adventurer';
+    if (jobKeywords.includes('design') || jobKeywords.includes('تصميم') || jobKeywords.includes('ui') || jobKeywords.includes('ux')) {
+      style = 'avataaars';
+    } else if (jobKeywords.includes('backend') || jobKeywords.includes('server') || jobKeywords.includes('api')) {
+      style = 'bottts';
+    } else if (jobKeywords.includes('mobile') || jobKeywords.includes('موبايل') || jobKeywords.includes('ios') || jobKeywords.includes('android')) {
+      style = 'fun-emoji';
+    } else if (jobKeywords.includes('data') || jobKeywords.includes('بيانات') || jobKeywords.includes('ai') || jobKeywords.includes('ذكاء')) {
+      style = 'pixel-art';
+    }
+    
+    return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -485,9 +505,13 @@ export default function Jobs() {
                     </div>
 
                     <div className="flex flex-col md:flex-row md:items-start gap-4">
-                      {/* Company Logo */}
-                      <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center text-lg font-bold text-primary-foreground shrink-0">
-                        {job.company?.charAt(0) || 'ش'}
+                      {/* Company Avatar */}
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-primary shrink-0 shadow-glow">
+                        <img 
+                          src={getJobAvatar(job)} 
+                          alt={job.company || 'شركة'}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
                       {/* Content */}

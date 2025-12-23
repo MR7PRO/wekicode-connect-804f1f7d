@@ -51,7 +51,7 @@ interface Question {
 
 export default function Questions() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   
   const [selectedCategory, setSelectedCategory] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
@@ -179,8 +179,10 @@ export default function Questions() {
     setIsDialogOpen(false);
     setSubmitting(false);
     fetchQuestions();
+    
+    // Refresh profile to get updated points
+    await refreshProfile();
   };
-
   const handleVote = async (questionId: string, type: 'up' | 'down') => {
     if (!user) {
       toast({

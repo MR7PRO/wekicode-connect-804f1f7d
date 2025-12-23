@@ -72,7 +72,7 @@ interface Redemption {
 }
 
 export default function Rewards() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("الكل");
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [myRedemptions, setMyRedemptions] = useState<Redemption[]>([]);
@@ -190,12 +190,12 @@ export default function Rewards() {
     // Refresh data
     await fetchRedemptions();
     await fetchRewards();
+    await refreshProfile(); // Refresh profile to get updated points
 
     setIsRedeeming(false);
     setLastRedeemed(reward);
     setShowSuccess(true);
   };
-
   const closeSuccessDialog = () => {
     setShowSuccess(false);
     setSelectedReward(null);
