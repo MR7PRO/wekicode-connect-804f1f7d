@@ -539,11 +539,17 @@ export default function Questions() {
                           )}
                         </div>
 
-                        <Link to={`/questions/${question.id}`}>
+                        {question.id.startsWith('demo-') ? (
                           <h3 className="text-lg font-bold text-foreground mb-2 hover:text-primary transition-colors cursor-pointer">
                             {question.title}
                           </h3>
-                        </Link>
+                        ) : (
+                          <Link to={`/questions/${question.id}`}>
+                            <h3 className="text-lg font-bold text-foreground mb-2 hover:text-primary transition-colors cursor-pointer">
+                              {question.title}
+                            </h3>
+                          </Link>
+                        )}
                         <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
                           {question.content}
                         </p>
@@ -583,11 +589,17 @@ export default function Questions() {
                             </div>
                           </div>
                           
-                          <Link to={`/questions/${question.id}`}>
-                            <Button variant="outline" size="sm">
-                              عرض التفاصيل
+                          {question.id.startsWith('demo-') ? (
+                            <Button variant="outline" size="sm" disabled className="opacity-60">
+                              سؤال تجريبي
                             </Button>
-                          </Link>
+                          ) : (
+                            <Link to={`/questions/${question.id}`}>
+                              <Button variant="outline" size="sm">
+                                عرض التفاصيل
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>
