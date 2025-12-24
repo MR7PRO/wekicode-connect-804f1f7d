@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/components/notifications/NotificationSystem";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { AIChatBot } from "@/components/ai/AIChatBot";
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
 import QuestionDetail from "./pages/QuestionDetail";
@@ -45,6 +46,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <AIChatBot />
           </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
