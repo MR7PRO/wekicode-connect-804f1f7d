@@ -159,45 +159,7 @@ export default function Courses() {
       return;
     }
 
-    // Check if course requires points (not free and has a price)
-    if (!course.is_free && course.price && course.price > 0) {
-      // Refresh profile to get latest points
-      await refreshProfile();
-      
-      // Get fresh points from database
-      const { data: freshProfile } = await supabase
-        .from('profiles')
-        .select('points')
-        .eq('user_id', user.id)
-        .single();
-      
-      const currentPoints = freshProfile?.points ?? 0;
-      
-      if (currentPoints < course.price) {
-        toast({
-          title: "نقاط غير كافية",
-          description: `لديك ${currentPoints} نقطة وتحتاج ${course.price} نقطة. تحتاج ${course.price - currentPoints} نقطة إضافية`,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Deduct points for paid course
-      const { error: pointsError } = await supabase
-        .from('profiles')
-        .update({ points: currentPoints - course.price })
-        .eq('user_id', user.id);
-
-      if (pointsError) {
-        toast({
-          title: "خطأ",
-          description: "حدث خطأ أثناء خصم النقاط",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
+    // Database trigger handles points deduction atomically (prevents race conditions)
     const { error } = await supabase
       .from('course_enrollments')
       .insert({
@@ -208,11 +170,29 @@ export default function Courses() {
       });
 
     if (error) {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء التسجيل",
-        variant: "destructive"
-      });
+      // Handle insufficient points error from database trigger
+      if (error.message?.includes('Insufficient points')) {
+        const { data: freshProfile } = await supabase
+          .from('profiles')
+          .select('points')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        const currentPoints = freshProfile?.points ?? 0;
+        const neededPoints = course.price ?? 0;
+        
+        toast({
+          title: "نقاط غير كافية",
+          description: `لديك ${currentPoints} نقطة وتحتاج ${neededPoints} نقطة`,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ أثناء التسجيل",
+          variant: "destructive"
+        });
+      }
       return;
     }
 
