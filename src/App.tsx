@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,20 +7,40 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/components/notifications/NotificationSystem";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { AIChatBot } from "@/components/ai/AIChatBot";
-import Index from "./pages/Index";
-import Questions from "./pages/Questions";
-import QuestionDetail from "./pages/QuestionDetail";
-import Jobs from "./pages/Jobs";
-import Courses from "./pages/Courses";
-import Rewards from "./pages/Rewards";
-import Profile from "./pages/Profile";
-import Billing from "./pages/Billing";
-import Leaderboard from "./pages/Leaderboard";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const Questions = lazy(() => import("./pages/Questions"));
+const QuestionDetail = lazy(() => import("./pages/QuestionDetail"));
+const Jobs = lazy(() => import("./pages/Jobs"));
+const Courses = lazy(() => import("./pages/Courses"));
+const Rewards = lazy(() => import("./pages/Rewards"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Billing = lazy(() => import("./pages/Billing"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AIChatBot = lazy(() => import("./components/ai/AIChatBot").then(m => ({ default: m.AIChatBot })));
+
+// Optimized QueryClient with caching settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,24 +50,26 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <NotificationProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/questions" element={<Questions />} />
-              <Route path="/questions/:id" element={<QuestionDetail />} />
-              <Route path="/jobs" element={<Jobs />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              {/* Protected Routes - require authentication */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/rewards" element={<Rewards />} />
-                <Route path="/billing" element={<Billing />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <AIChatBot />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/questions" element={<Questions />} />
+                <Route path="/questions/:id" element={<QuestionDetail />} />
+                <Route path="/jobs" element={<Jobs />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                {/* Protected Routes - require authentication */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/rewards" element={<Rewards />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <AIChatBot />
+            </Suspense>
           </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
