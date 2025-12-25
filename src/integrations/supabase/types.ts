@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          request_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          request_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          request_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       answers: {
         Row: {
           content: string
@@ -530,6 +554,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_ai_chat_rate_limit: {
+        Args: {
+          p_max_requests?: number
+          p_user_id: string
+          p_window_minutes?: number
+        }
+        Returns: Json
+      }
       increment_question_answers: {
         Args: { question_uuid: string }
         Returns: undefined

@@ -11,9 +11,20 @@ const MAX_MESSAGES = 50;
 const MAX_MESSAGE_LENGTH = 10000;
 const ALLOWED_ROLES = ["user", "assistant"];
 
+// Rate limiting constants
+const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per hour
+const RATE_LIMIT_WINDOW_MINUTES = 60; // 1 hour window
+
 interface ChatMessage {
   role: string;
   content: string;
+}
+
+interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  reset_at: string;
+  retry_after?: number;
 }
 
 function validateMessages(messages: unknown): { valid: boolean; error?: string } {
@@ -78,17 +89,19 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       console.error("Missing Supabase environment variables");
       throw new Error("Server configuration error");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    // Create client for user authentication
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
 
     if (authError || !user) {
       console.error("Authentication failed:", authError?.message);
@@ -99,6 +112,49 @@ serve(async (req) => {
     }
 
     console.log("Authenticated user:", user.id);
+
+    // Create service role client for rate limiting (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check rate limit
+    const { data: rateLimitData, error: rateLimitError } = await supabaseAdmin.rpc(
+      'check_ai_chat_rate_limit',
+      {
+        p_user_id: user.id,
+        p_max_requests: RATE_LIMIT_MAX_REQUESTS,
+        p_window_minutes: RATE_LIMIT_WINDOW_MINUTES
+      }
+    );
+
+    if (rateLimitError) {
+      console.error("Rate limit check failed:", rateLimitError.message);
+      // Don't block on rate limit errors, just log and continue
+    } else {
+      const rateLimitResult = rateLimitData as RateLimitResult;
+      
+      if (!rateLimitResult.allowed) {
+        console.log("Rate limit exceeded for user:", user.id);
+        const retryAfter = rateLimitResult.retry_after || 60;
+        const minutes = Math.ceil(retryAfter / 60);
+        
+        return new Response(
+          JSON.stringify({ 
+            error: `تم تجاوز حد الطلبات. يرجى الانتظار ${minutes} دقيقة قبل إرسال رسائل جديدة`,
+            retryAfter: retryAfter
+          }),
+          { 
+            status: 429, 
+            headers: { 
+              ...corsHeaders, 
+              "Content-Type": "application/json",
+              "Retry-After": String(retryAfter)
+            } 
+          }
+        );
+      }
+      
+      console.log("Rate limit check passed. Remaining requests:", rateLimitResult.remaining);
+    }
 
     // Parse and validate request body
     let body: { messages?: unknown };
