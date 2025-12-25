@@ -10,11 +10,15 @@ import {
   MessageSquare,
   Code,
   Lightbulb,
-  Trash2
+  Trash2,
+  LogIn
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -35,6 +39,9 @@ export function AIChatBot() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -51,17 +58,30 @@ export function AIChatBot() {
   }, [isOpen]);
 
   const streamChat = async (userMessages: Message[]) => {
+    // Get the current session token
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error("يجب تسجيل الدخول لاستخدام المساعد الذكي");
+    }
+
     const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ messages: userMessages }),
     });
 
     if (!resp.ok) {
       const errorData = await resp.json().catch(() => ({}));
+      
+      // Handle authentication errors
+      if (resp.status === 401) {
+        throw new Error("يجب تسجيل الدخول لاستخدام المساعد الذكي");
+      }
+      
       throw new Error(errorData.error || "فشل الاتصال بالمساعد الذكي");
     }
 
@@ -116,6 +136,16 @@ export function AIChatBot() {
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
 
+    // Check if user is authenticated before sending
+    if (!user) {
+      toast({
+        title: "تسجيل الدخول مطلوب",
+        description: "يجب تسجيل الدخول لاستخدام المساعد الذكي",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const userMessage: Message = { role: "user", content: text.trim() };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
@@ -125,13 +155,24 @@ export function AIChatBot() {
       await streamChat([...messages, userMessage]);
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages(prev => [
-        ...prev,
-        { 
-          role: "assistant", 
-          content: error instanceof Error ? error.message : "حدث خطأ، يرجى المحاولة مرة أخرى" 
-        }
-      ]);
+      
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ، يرجى المحاولة مرة أخرى";
+      
+      // If authentication error, show toast and prompt to login
+      if (errorMessage.includes("تسجيل الدخول")) {
+        toast({
+          title: "تسجيل الدخول مطلوب",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        // Remove the user message since we couldn't process it
+        setMessages(prev => prev.slice(0, -1));
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: errorMessage }
+        ]);
+      }
     } finally {
       setIsLoading(false);
     }

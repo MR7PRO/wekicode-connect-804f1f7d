@@ -1,9 +1,64 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation constants
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_LENGTH = 10000;
+const ALLOWED_ROLES = ["user", "assistant"];
+
+interface ChatMessage {
+  role: string;
+  content: string;
+}
+
+function validateMessages(messages: unknown): { valid: boolean; error?: string } {
+  if (!Array.isArray(messages)) {
+    return { valid: false, error: "الرسائل يجب أن تكون في تنسيق مصفوفة" };
+  }
+
+  if (messages.length === 0) {
+    return { valid: false, error: "يجب إرسال رسالة واحدة على الأقل" };
+  }
+
+  if (messages.length > MAX_MESSAGES) {
+    return { valid: false, error: `الحد الأقصى للرسائل هو ${MAX_MESSAGES}` };
+  }
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i] as ChatMessage;
+
+    if (!msg || typeof msg !== "object") {
+      return { valid: false, error: `الرسالة ${i + 1} غير صالحة` };
+    }
+
+    if (!msg.role || typeof msg.role !== "string") {
+      return { valid: false, error: `الرسالة ${i + 1} تفتقد دور المستخدم` };
+    }
+
+    if (!ALLOWED_ROLES.includes(msg.role)) {
+      return { valid: false, error: `دور الرسالة ${i + 1} غير صالح` };
+    }
+
+    if (!msg.content || typeof msg.content !== "string") {
+      return { valid: false, error: `الرسالة ${i + 1} تفتقد المحتوى` };
+    }
+
+    if (msg.content.length > MAX_MESSAGE_LENGTH) {
+      return { valid: false, error: `الرسالة ${i + 1} طويلة جداً (الحد الأقصى ${MAX_MESSAGE_LENGTH} حرف)` };
+    }
+
+    if (msg.content.trim().length === 0) {
+      return { valid: false, error: `الرسالة ${i + 1} فارغة` };
+    }
+  }
+
+  return { valid: true };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,10 +66,67 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    // Verify user authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: "يجب تسجيل الدخول لاستخدام المساعد الذكي" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Missing Supabase environment variables");
+      throw new Error("Server configuration error");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Authenticated user:", user.id);
+
+    // Parse and validate request body
+    let body: { messages?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "تنسيق الطلب غير صالح" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { messages } = body;
+
+    // Validate messages input
+    const validation = validateMessages(messages);
+    if (!validation.valid) {
+      console.error("Input validation failed:", validation.error);
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY is not configured");
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
@@ -32,6 +144,8 @@ serve(async (req) => {
 - اقترح موارد إضافية عند الحاجة
 - كن ودوداً ومشجعاً`;
 
+    console.log("Sending request to AI gateway for user:", user.id);
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -42,7 +156,7 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...(messages as ChatMessage[]),
         ],
         stream: true,
       }),
