@@ -20,8 +20,10 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Billing = lazy(() => import("./pages/Billing"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Auth = lazy(() => import("./pages/Auth"));
+const Install = lazy(() => import("./pages/Install"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AIChatBot = lazy(() => import("./components/ai/AIChatBot").then(m => ({ default: m.AIChatBot })));
+const PWAInstallPrompt = lazy(() => import("./components/pwa/PWAInstallPrompt").then(m => ({ default: m.PWAInstallPrompt })));
 
 // Optimized QueryClient with caching settings
 const queryClient = new QueryClient({
@@ -54,6 +56,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/install" element={<Install />} />
                 <Route path="/questions" element={<Questions />} />
                 <Route path="/questions/:id" element={<QuestionDetail />} />
                 <Route path="/jobs" element={<Jobs />} />
@@ -69,6 +72,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <AIChatBot />
+              <PWAInstallPrompt />
             </Suspense>
           </NotificationProvider>
         </AuthProvider>
