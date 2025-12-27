@@ -25,6 +25,7 @@ import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { DailyCheckinCalendar } from "@/components/rewards/DailyCheckin";
 
 const categories = ["الكل", "اشتراكات", "قسائم مالية", "خدمات", "هدايا", "أجهزة"];
 
@@ -306,6 +307,9 @@ export default function Rewards() {
               </div>
             </div>
           </div>
+
+          {/* Daily Check-in Calendar */}
+          <DailyCheckinCalendar />
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-8">
