@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const allowedOrigins = [
   "https://epajjiiuaqjieecvmpln.lovable.app",
   "https://epajjiiuaqjieecvmpln.supabase.co",
+  "https://a699ad31-eba0-4c1b-ae9b-fe12b2562e4e.lovableproject.com",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
