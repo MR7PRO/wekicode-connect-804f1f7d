@@ -26,6 +26,17 @@ export const badgeIcons = {
   rocket: Rocket,
 };
 
+// Streak badges
+export const streakBadges: Badge[] = [
+  { id: "streak_3", name: "بداية قوية", description: "سجل حضور 3 أيام متتالية", icon: "flame", color: "primary", requirement: 3 },
+  { id: "streak_7", name: "أسبوع كامل", description: "سجل حضور 7 أيام متتالية", icon: "flame", color: "accent", requirement: 7 },
+  { id: "streak_14", name: "المثابر", description: "سجل حضور 14 يوم متتالي", icon: "flame", color: "success", requirement: 14 },
+  { id: "streak_30", name: "البطل الشهري", description: "سجل حضور 30 يوم متتالي", icon: "trophy", color: "warning", requirement: 30 },
+  { id: "streak_60", name: "النجم الصاعد", description: "سجل حضور 60 يوم متتالي", icon: "star", color: "accent", requirement: 60 },
+  { id: "streak_90", name: "الأسطورة", description: "سجل حضور 90 يوم متتالي", icon: "crown", color: "warning", requirement: 90 },
+  { id: "streak_100", name: "المائة", description: "سجل حضور 100 يوم متتالي", icon: "award", color: "warning", requirement: 100 },
+];
+
 export const allBadges: Badge[] = [
   { id: "first_answer", name: "أول إجابة", description: "أجب على أول سؤال", icon: "star", color: "primary", requirement: 1 },
   { id: "helper", name: "المساعد", description: "أجب على 10 أسئلة", icon: "heart", color: "accent", requirement: 10 },
@@ -35,9 +46,24 @@ export const allBadges: Badge[] = [
   { id: "pro_freelancer", name: "المستقل المحترف", description: "أكمل 20 مشروع", icon: "crown", color: "warning", requirement: 20 },
   { id: "learner", name: "المتعلم", description: "أكمل أول دورة", icon: "target", color: "primary", requirement: 1 },
   { id: "scholar", name: "العالم", description: "أكمل 10 دورات", icon: "shield", color: "success", requirement: 10 },
-  { id: "streak_7", name: "سبعة أيام متتالية", description: "سجل دخول 7 أيام متتالية", icon: "flame", color: "accent", requirement: 7 },
+  ...streakBadges,
   { id: "legend", name: "الأسطورة", description: "اصل للمستوى 10", icon: "award", color: "warning", requirement: 10 },
 ];
+
+// Helper function to check earned streak badges
+export function getEarnedStreakBadges(currentStreak: number): string[] {
+  return streakBadges
+    .filter(badge => currentStreak >= badge.requirement)
+    .map(badge => badge.id);
+}
+
+// Helper function to get newly earned badges
+export function getNewlyEarnedBadge(currentStreak: number, existingBadges: string[]): Badge | null {
+  const earnedBadge = streakBadges.find(
+    badge => currentStreak >= badge.requirement && !existingBadges.includes(badge.id)
+  );
+  return earnedBadge || null;
+}
 
 interface BadgeUnlockModalProps {
   badge: Badge | null;

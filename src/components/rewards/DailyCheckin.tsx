@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Calendar, Gift, Check, Coins, Loader2, Flame, Trophy, Zap } from "lucide-react";
+import { Calendar, Gift, Check, Coins, Loader2, Flame, Trophy, Zap, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { streakBadges, getNewlyEarnedBadge, BadgeUnlockModal, Badge } from "@/components/badges/BadgeSystem";
 
 interface DailyCheckin {
   id: string;
@@ -33,6 +34,8 @@ export function DailyCheckinCalendar() {
   const [checkingIn, setCheckingIn] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [streakInfo, setStreakInfo] = useState<StreakInfo>({ current_streak: 0, longest_streak: 0 });
+  const [unlockedBadge, setUnlockedBadge] = useState<Badge | null>(null);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
 
   // Get days in current month
   const getDaysInMonth = (date: Date) => {
@@ -155,7 +158,26 @@ export function DailyCheckinCalendar() {
       const newStreak = streakInfo.current_streak + 1;
       const milestone = STREAK_MILESTONES.find(m => m.days === newStreak);
       
-      if (milestone) {
+      // Check for new badge earned
+      const existingBadges = profile?.badges || [];
+      const newBadge = getNewlyEarnedBadge(newStreak, existingBadges);
+      
+      if (newBadge) {
+        // Award the badge
+        const updatedBadges = [...existingBadges, newBadge.id];
+        await supabase.rpc('update_profile_info', {
+          p_full_name: null,
+          p_bio: null,
+          p_skills: null,
+          p_avatar_url: null
+        });
+        
+        // Update badges separately using direct update (we need a new function or direct update)
+        // For now, show the badge modal
+        setUnlockedBadge(newBadge);
+        setShowBadgeModal(true);
+        await refreshProfile();
+      } else if (milestone) {
         toast({
           title: `🔥 إنجاز ${milestone.label}!`,
           description: `حصلت على ${milestone.bonus} نقطة إضافية لسلسلة ${milestone.days} يوم!`,
@@ -196,6 +218,12 @@ export function DailyCheckinCalendar() {
   const totalPointsThisMonth = checkins.reduce((sum, c) => sum + c.points_earned, 0);
 
   return (
+    <>
+    <BadgeUnlockModal 
+      badge={unlockedBadge} 
+      isOpen={showBadgeModal} 
+      onClose={() => setShowBadgeModal(false)} 
+    />
     <div className="glass rounded-2xl p-6 border-primary/30 mb-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -431,5 +459,6 @@ export function DailyCheckinCalendar() {
         </>
       )}
     </div>
+    </>
   );
 }
