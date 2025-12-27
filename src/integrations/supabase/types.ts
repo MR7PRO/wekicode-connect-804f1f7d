@@ -329,9 +329,12 @@ export type Database = {
           badges: string[] | null
           bio: string | null
           created_at: string
+          current_streak: number | null
           full_name: string | null
           id: string
+          last_checkin_date: string | null
           level: number | null
+          longest_streak: number | null
           points: number | null
           skills: string[] | null
           updated_at: string
@@ -342,9 +345,12 @@ export type Database = {
           badges?: string[] | null
           bio?: string | null
           created_at?: string
+          current_streak?: number | null
           full_name?: string | null
           id?: string
+          last_checkin_date?: string | null
           level?: number | null
+          longest_streak?: number | null
           points?: number | null
           skills?: string[] | null
           updated_at?: string
@@ -355,9 +361,12 @@ export type Database = {
           badges?: string[] | null
           bio?: string | null
           created_at?: string
+          current_streak?: number | null
           full_name?: string | null
           id?: string
+          last_checkin_date?: string | null
           level?: number | null
+          longest_streak?: number | null
           points?: number | null
           skills?: string[] | null
           updated_at?: string
