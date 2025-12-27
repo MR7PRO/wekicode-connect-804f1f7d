@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Gift, Check, Coins, Loader2 } from "lucide-react";
+import { Calendar, Gift, Check, Coins, Loader2, Flame, Trophy, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,12 +12,27 @@ interface DailyCheckin {
   points_earned: number;
 }
 
+interface StreakInfo {
+  current_streak: number;
+  longest_streak: number;
+}
+
+const STREAK_MILESTONES = [
+  { days: 7, bonus: 25, label: "أسبوع" },
+  { days: 14, bonus: 50, label: "أسبوعين" },
+  { days: 30, bonus: 100, label: "شهر" },
+  { days: 60, bonus: 200, label: "شهرين" },
+  { days: 90, bonus: 300, label: "3 أشهر" },
+  { days: 100, bonus: 500, label: "100 يوم" },
+];
+
 export function DailyCheckinCalendar() {
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, profile } = useAuth();
   const [checkins, setCheckins] = useState<DailyCheckin[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkingIn, setCheckingIn] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [streakInfo, setStreakInfo] = useState<StreakInfo>({ current_streak: 0, longest_streak: 0 });
 
   // Get days in current month
   const getDaysInMonth = (date: Date) => {
@@ -51,10 +66,28 @@ export function DailyCheckinCalendar() {
   useEffect(() => {
     if (user) {
       fetchCheckins();
+      fetchStreakInfo();
     } else {
       setLoading(false);
     }
   }, [user, currentMonth]);
+
+  const fetchStreakInfo = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('current_streak, longest_streak')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (!error && data) {
+      setStreakInfo({
+        current_streak: data.current_streak || 0,
+        longest_streak: data.longest_streak || 0
+      });
+    }
+  };
 
   const fetchCheckins = async () => {
     if (!user) return;
@@ -115,15 +148,35 @@ export function DailyCheckinCalendar() {
       }
     } else {
       await fetchCheckins();
+      await fetchStreakInfo();
       await refreshProfile();
-      toast({
-        title: "🎉 تم تسجيل الحضور!",
-        description: "حصلت على 5 نقاط مجانية!",
-      });
+      
+      // Check for streak milestone
+      const newStreak = streakInfo.current_streak + 1;
+      const milestone = STREAK_MILESTONES.find(m => m.days === newStreak);
+      
+      if (milestone) {
+        toast({
+          title: `🔥 إنجاز ${milestone.label}!`,
+          description: `حصلت على ${milestone.bonus} نقطة إضافية لسلسلة ${milestone.days} يوم!`,
+        });
+      } else {
+        toast({
+          title: "🎉 تم تسجيل الحضور!",
+          description: "حصلت على 5 نقاط مجانية!",
+        });
+      }
     }
 
     setCheckingIn(false);
   };
+
+  // Get next milestone
+  const getNextMilestone = () => {
+    return STREAK_MILESTONES.find(m => m.days > streakInfo.current_streak);
+  };
+
+  const nextMilestone = getNextMilestone();
 
   const monthNames = [
     "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
@@ -155,6 +208,68 @@ export function DailyCheckinCalendar() {
         </div>
       </div>
 
+      {/* Streak Stats */}
+      {user && (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl p-4 border border-orange-500/30"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Flame className="w-5 h-5 text-orange-500" />
+              <span className="text-sm text-muted-foreground">السلسلة الحالية</span>
+            </div>
+            <div className="text-2xl font-bold text-foreground">{streakInfo.current_streak} <span className="text-sm font-normal text-muted-foreground">يوم</span></div>
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 rounded-xl p-4 border border-yellow-500/30"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              <span className="text-sm text-muted-foreground">أطول سلسلة</span>
+            </div>
+            <div className="text-2xl font-bold text-foreground">{streakInfo.longest_streak} <span className="text-sm font-normal text-muted-foreground">يوم</span></div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Next Milestone */}
+      {user && nextMilestone && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-r from-primary/20 to-accent/20 rounded-xl p-4 mb-4 border border-primary/30"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-medium text-foreground">الهدف التالي: {nextMilestone.label}</div>
+                <div className="text-sm text-muted-foreground">
+                  متبقي <span className="text-primary font-bold">{nextMilestone.days - streakInfo.current_streak}</span> يوم
+                </div>
+              </div>
+            </div>
+            <div className="text-accent font-bold text-lg">+{nextMilestone.bonus}</div>
+          </div>
+          <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${(streakInfo.current_streak / nextMilestone.days) * 100}%` }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+            />
+          </div>
+        </motion.div>
+      )}
+
       {/* Welcome bonus info */}
       <div className="bg-gradient-to-r from-success/20 to-success/5 rounded-xl p-4 mb-4 border border-success/30">
         <div className="flex items-center gap-3">
@@ -165,6 +280,33 @@ export function DailyCheckinCalendar() {
             <div className="font-medium text-foreground">هدية الترحيب</div>
             <div className="text-sm text-muted-foreground">كل مستخدم جديد يحصل على <span className="text-success font-bold">10 نقاط</span> مجاناً!</div>
           </div>
+        </div>
+      </div>
+
+      {/* Streak Milestones Info */}
+      <div className="bg-secondary/30 rounded-xl p-4 mb-4 border border-border/50">
+        <div className="flex items-center gap-2 mb-3">
+          <Flame className="w-5 h-5 text-orange-500" />
+          <span className="font-medium text-foreground">مكافآت السلاسل</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {STREAK_MILESTONES.slice(0, 6).map((milestone) => (
+            <div 
+              key={milestone.days}
+              className={`text-center p-2 rounded-lg transition-all ${
+                streakInfo.current_streak >= milestone.days 
+                  ? "bg-success/20 border border-success/50" 
+                  : "bg-secondary/50 border border-border/30"
+              }`}
+            >
+              <div className={`text-xs font-medium ${streakInfo.current_streak >= milestone.days ? "text-success" : "text-muted-foreground"}`}>
+                {milestone.label}
+              </div>
+              <div className={`text-sm font-bold ${streakInfo.current_streak >= milestone.days ? "text-success" : "text-foreground"}`}>
+                +{milestone.bonus}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
